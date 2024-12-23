@@ -1,9 +1,8 @@
 import app from "./app";
+import "dotenv/config";
 
-const firstFunction = (params: string) => {
-    console.log(params + " " + "from firstFunction");
-};
+const PORT = process.env.PORT || 5000;
 
-firstFunction("Hello World");
-
-app("Hello World");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
