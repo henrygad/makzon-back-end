@@ -1,0 +1,27 @@
+{
+  "name": "makzon-back-end",
+  "version": "1.0.0",
+  "description": "makzon back end code",
+  "main": "dist/server.js",
+  "scripts": {
+    "test": "node test.js",
+    "build": "tsc",
+    "start": "yarn build && node dist/server.js",
+    "dev": "nodemon",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
+  },
+  "repository": "github",
+  "author": "Henry Loveday",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1"
+  }
+}
