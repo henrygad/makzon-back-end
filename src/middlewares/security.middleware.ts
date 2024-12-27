@@ -5,14 +5,21 @@ import xssClean from "xss-clean";
 import hpp from "hpp";
 import { Application, Request, Response, NextFunction } from "express";
 
-const securityMiddleware = (app: Application) => {
-  // Use Helmet to secure HTTP headers
+export const securityMiddleware = (app: Application) => {
+  // Secure HTTP headers
   app.use(helmet());
 
   // Enable CORS for trusted domains
-  app.use(cors());
+  if (process.env.SAME_ORIGIN === "false") {
+    app.use(
+      cors({
+        origin: [], // Trusted domian names
+        credentials: true, // Send cookies to cross-orgin request resourse
+      })
+    );
+  }
 
-  // Sanitize request data and prevent XSS
+  // Sanitize inputs to prevent XSS (cross-site scripting) attack
   app.use(xssClean());
 
   // Prevent HTTP Parameter Pollution
@@ -33,11 +40,8 @@ export const enforceHTTPS = (
   res: Response,
   next: NextFunction
 ) => {
-  if (process.env.NODE_ENV === "production" && !req.secure) {
+  if (!req.secure) {
     return res.redirect(`https://${req.headers.host}${req.url}`);
-  };
+  }
   next();
 };
-
-
-export default securityMiddleware;

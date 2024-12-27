@@ -1,21 +1,22 @@
-import { Request, Response} from "express";
+import { NextFunction, Request, Response } from "express";
 
 interface ErrorWithStatus extends Error {
   statusCode?: number;
   status?: string;
   isOperational?: boolean;
-};
+}
 
-const errorHandler = (err: ErrorWithStatus, _: Request, res: Response) => {
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
-    success: false,
-    status: err.statusCode || "error",
+const errorHandler = (err: ErrorWithStatus, req: Request, res: Response, next: NextFunction) => {
+  err.statusCode = err.statusCode || 500;
+  res.status(err.statusCode).json({
+    ...err,
     message: err.message || "Server Error",
-    isOperational: err.isOperational || false,
     stack: process.env.NODE_ENV === "production" ? null : err.stack,
-    date: Date.toString(),
+    date: Date(),
+    targetUrl: req.originalUrl
   });
+
+  next();
 };
 
 export default errorHandler;

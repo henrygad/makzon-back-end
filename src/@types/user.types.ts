@@ -1,30 +1,39 @@
 import mongoose from "mongoose";
 
 type userProps = {
-  _id: mongoose.ObjectId
+  _id: mongoose.ObjectId;
   userName: string;
   email: string;
   password: string;
   googleId?: string;
   isValidPassword(password: string): Promise<boolean>;
-  isVerified: boolean;
-  loginDBToken: string;
+  userVerified: boolean;
+  sessions: {
+    token: string,
+    toExpire: number
+  }[]
   verificationToken: string;
   verificationTokenExpiringdate: number;
+  changeEmailVerificationToken: string;
+  changeEmailVerificationTokenExpiringdate: number;
+  requestChangeEmail: string,
   forgetPassWordToken: string;
   forgetPassWordTokenExpiringdate: number;
   avatar: string;
+  name: { familyName: string; givenName: string };
   dateOfBirth: string;
   displayDateOfBirth: boolean;
-  displayEmails: [string];
-  displayPhoneNumbers: [string];
+  displayEmail: string;
+  displayPhoneNumber: string;
   website: string;
   profession: [string];
   country: string;
   sex: string;
   bio: string;
-  followers: [string];
-  followings: [string];
+  followers: string[];
+  followings: string[];
+  interest: string[]
 };
+
 
 export default userProps;

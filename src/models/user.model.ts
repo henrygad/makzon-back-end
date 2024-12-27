@@ -1,12 +1,12 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
-import userProps from "../types/user.types";
+import userProps from "../@types/user.types";
 
 
-interface IUser extends userProps, Document<Schema.Types.ObjectId> {
+export interface IUser extends userProps, Document<Schema.Types.ObjectId> {
 };
 
-const UserSchema: Schema = new Schema(
+const UserSchema = new Schema(
   {
     userName: {
       type: String,
@@ -16,26 +16,47 @@ const UserSchema: Schema = new Schema(
     email: {
       type: String,
       require: [true, "Please provide an email"],
-      unique: [true, "There is an  account with his email"],
+      unique: [true, "There is an  account with this email"],
     },
     password: {
       type: String,
       require: [true, "Please provide a password"],
     },
-    isVerified: {
+    googleId: {
+      type: String,
+      require: false,
+      unique: [true, "There is an  account with this google id"],
+      default: null,
+    },
+    userVerified: {
       type: Boolean,
       default: false,
     },
-    loginDBToken: String,
+    sessions: [
+      {
+        token: {
+          type: String,
+          unique: true
+        },
+        toExpire: Number
+      }
+    ],
     verificationToken: String,
     verificationTokenExpiringdate: Number,
+    changeEmailVerificationToken: String,
+    changeEmailVerificationTokenExpiringdate: Number,
+    requestChangeEmail: String,
     forgetPassWordToken: String,
     forgetPassWordTokenExpiringdate: Number,
     avatar: String,
+    name: { familyName: String, givenName: String },
     dateOfBirth: String,
-    displayDateOfBirth: Boolean,
-    displayEmails: [String],
-    displayPhoneNumbers: [String],
+    displayDateOfBirth: {
+      type: Boolean,
+      default: false
+    },
+    displayEmail: String,
+    displayPhoneNumber: String,
     website: String,
     profession: [String],
     country: String,
@@ -50,17 +71,21 @@ const UserSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-UserSchema.pre<IUser>("save", async function (next) {
+// On save data, hash user password
+UserSchema.pre<IUser>("save", async function (next) { 
   if (this.isModified("password")) {
-      this.password = await bcrypt.hash(this.password, 12);
+    this.password = await bcrypt.hash(this.password, 12);
     }
   next();
 });
 
+// Method to validate user input password
 UserSchema.methods.isValidPassword = async function (password: string) {
-  return bcrypt.compare(password, this.password);
+  const isMatch = await bcrypt.compare(password, this.password);
+  return isMatch;
 };
 
 const Users: Model<IUser> = mongoose.models.users || mongoose.model<IUser>("users", UserSchema);
+
 
 export default Users;
