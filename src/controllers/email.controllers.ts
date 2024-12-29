@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { IUser } from "../models/user.model";
-import createError from "../utils/error.utils";
+import Users, { IUser } from "../models/user.model";
+import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../utils/sendEmail";
 import "dotenv/config";
@@ -25,7 +25,11 @@ export const sendChangeEmailOTP = async (
         const newEmail = email; // Reasign incoming email as new email
         const user = req.user as IUser;
 
-        if (user.email === newEmail) createError({ statusCode: 400, message: "New email cannot be the same as current email" });
+        // Validate cannot use this email
+        let cannotUseEmail: boolean | null = user.email === newEmail;
+        if (cannotUseEmail) createError({ statusCode: 400, message: "New email cannot be the same as current email" });
+        cannotUseEmail = await Users.findOne({ email: newEmail });
+        if (cannotUseEmail) createError({ statusCode: 400, message: "Email is already in use" });
 
         // Send OTP token to the old email box
         await sendEmail({

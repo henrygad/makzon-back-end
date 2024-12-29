@@ -6,9 +6,9 @@ import {
   sendVerificationOTP,
   verifyUser,
 } from "../controllers/verification.controller";
-import createError from "../utils/error.utils";
+import createError from "../utils/error";
 import { IUser } from "../models/user.model";
-import { authValidate_changeEmail, authValidate_changePassword, authValidate_login, authValidate_register, authValidate_resetPassword, authValidate_varification_body, authValidate_varification_query } from "../validators/auth.validator";
+import { authValidate_changeEmail, authValidate_changeEmail_request, authValidate_changePassword, authValidate_login, authValidate_register, authValidate_resetPassword, authValidate_varification_body, authValidate_varification_query } from "../validators/auth.validator";
 import { changeEmail, sendChangeEmailOTP } from "../controllers/email.controllers";
 
 const router = Router();
@@ -61,7 +61,7 @@ router.post("/password/reset", authValidate_resetPassword, verifyUser);
 router.post("/password/change", authValidate_changePassword, isAuthenticated, verifyUser);
 
 // Chnage account email 
-router.post("/email", authValidate_varification_body, isAuthenticated, sendChangeEmailOTP);
+router.post("/email", authValidate_changeEmail_request, isAuthenticated, sendChangeEmailOTP);
 router.post("/email/change", authValidate_changeEmail, isAuthenticated, changeEmail);
 
 // Log out current login user

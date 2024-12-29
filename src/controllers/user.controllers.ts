@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import Users, { IUser } from "../models/user.model";
-import createError from "../utils/error.utils";
+import createError from "../utils/error";
 import userProps from "../@types/user.types";
 import { SessionData } from "express-session";
 import { validationResult } from "express-validator";
@@ -37,8 +37,11 @@ export const sendUserData = async (
   }
 };
 
+// Update user avatar
+
+
 // Edit and update user data to db
-export const editUserData = async (
+export const updateUserData = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -105,10 +108,10 @@ export const deleteUserData = async (
     if (!errors.isEmpty()) {
       return next(createError({ statusCode: 400, message: errors.array()[0].msg }));
     }
-    
+
     const { password }: { password: string } = req.body;
     const user = (req.user as IUser);
-    
+
     // Comfirm user password
     const isMatch = user.isValidPassword(password);
     if (!isMatch) createError({ statusCode: 401, message: "Invalid password" });

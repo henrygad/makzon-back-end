@@ -1,17 +1,22 @@
-import crypto from "crypto";
 
-export const OTP = (num) => {
-  let otp = "";
-  const characters = "P1r3Z5q7i9";
-  const bytes = crypto.randomBytes(num);
 
-  for (let i = 0; i < num; i++) {
-    otp += characters[bytes[i] % characters.length];
+function u() {
+  return {
+    single: (name) => {
+      return function (body) {
+        console.log("Params from single:", name);
+        console.log("Request body:", body);
+      };
+    },
   };
+}
 
-  return otp;
+const t = u();
+
+function pls(condition, cb) {
+  if (condition === "true") {
+    cb("my body");
+  }
 };
-
-
-const t = OTP(4);
-console.log(t);
+ 
+pls("true", t.single("henry"));

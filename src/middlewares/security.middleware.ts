@@ -13,8 +13,9 @@ export const securityMiddleware = (app: Application) => {
   if (process.env.SAME_ORIGIN === "false") {
     app.use(
       cors({
-        origin: [], // Trusted domian names
-        credentials: true, // Send cookies to cross-orgin request resourse
+        origin: [], // Allow requests from this origin
+        methods: [], // Allow specific HTTP methods
+        credentials: true, // Allow
       })
     );
   }

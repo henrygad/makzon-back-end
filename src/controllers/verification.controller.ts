@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import Users from "../models/user.model";
-import createError from "../utils/error.utils";
+import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../utils/sendEmail";
 import "dotenv/config";

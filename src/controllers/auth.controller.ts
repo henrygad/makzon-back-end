@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import createError from "../utils/error.utils";
+import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../utils/sendEmail";
 import "dotenv/config";

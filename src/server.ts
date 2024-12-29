@@ -1,12 +1,12 @@
 import app from "./app";
 import "dotenv/config";
-import connectDB from "./config/db.config";
+//import connectDB from "./config/db.config";
 import fs from "fs";
 import https from "https";
 
 const PORT = process.env.PORT || 5000;
 
-connectDB(() => {
+//connectDB(() => {
   if (process.env.NODE_ENV === "production") {
     
     const options = {    
@@ -32,7 +32,7 @@ connectDB(() => {
       );
     });
   }
-});
+//});
 
 /* app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

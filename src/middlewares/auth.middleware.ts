@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import createError from "../utils/error.utils";
+import createError from "../utils/error";
 import { IUser } from "../models/user.model";
 
 // Authenticate user middleware

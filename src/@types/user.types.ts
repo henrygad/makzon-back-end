@@ -30,7 +30,6 @@ type userProps = {
   country: string;
   sex: string;
   bio: string;
-  followers: string[];
   followings: string[];
   interest: string[]
 };

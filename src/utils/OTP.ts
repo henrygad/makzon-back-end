@@ -8,7 +8,6 @@ export const OTP = (num: number) => {
   for (let i = 0; i < num; i++) {
     otp += characters[bytes[i] % characters.length];
   }
-
   return otp;
 };
 

@@ -3,7 +3,7 @@ import { body, query } from "express-validator";
 export const authValidate_register = [
     body("userName")
         .trim()
-        .isString().withMessage("Username must be a string")
+        .isString().withMessage("Username must be a string").withMessage("Field must be a string")
         .isLength({ min: 5 }).withMessage("Username must be at least 5 characters long.")
         .escape(),
 
@@ -37,14 +37,14 @@ export const authValidate_login = [
 export const authValidate_varification_body = [
     body("email")
         .trim()
-        .isString()
+        .isString().withMessage("Field must be a string")
         .escape(),
 ];
 
 export const authValidate_varification_query = [
     query(["email", "otp"])
         .trim()
-        .isString()
+        .isString().withMessage("Field must be a string")
         .escape(),
 ];
 
@@ -80,15 +80,17 @@ export const authValidate_changePassword = [
         .escape()
 ];
 
-export const authValidate_changeEmail = [
+export const authValidate_changeEmail_request = [
     body("newEmail")
         .trim()
         .isEmail()
         .withMessage("Email must be a valid email address")
         .normalizeEmail(),
-    
-    body("otp")
+];
+
+export const authValidate_changeEmail = [
+        body(["newEmail","otp"])
         .trim().
-        isString()
+        isString().withMessage("Field must be a string")
         .escape()
 ];

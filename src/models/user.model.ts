@@ -65,8 +65,7 @@ const UserSchema = new Schema(
       type: String,
       max: [50, "Words have exceded 50 words"],
     },
-    followers: [String],
-    followings: [String],
+    followers: [String],    
   },
   { timestamps: true }
 );

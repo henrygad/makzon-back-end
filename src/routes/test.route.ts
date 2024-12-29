@@ -1,12 +1,15 @@
-import { Router,  Request, Response, NextFunction } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { isAuthenticated } from "../middlewares/auth.middleware";
 import Users from "../models/user.model";
-import createError from "../utils/error.utils";
+import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../utils/sendEmail";
+import uploadMedia from "../middlewares/uploadMedia.middleware";
+import fs from "fs";
+import path from "path";
+import acceptedFiles from "../utils/fileFromat";
 
 const router = Router();
-
 
 router.get(
   "/users",
@@ -42,6 +45,31 @@ router.get("/email", async (_: Request, res: Response, next: NextFunction) => {
     res.status(200).json({
       message: "OTP token has been sent to your mail box",
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/docs", uploadMedia("doc", 10, async (files) => {
+  console.log(files?.length ?"true": "false");
+}));
+
+router.get("/file/:folder/:filename", (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { folder, filename } = req.params;
+
+    // The request file info
+    const fileExt = path.extname(filename).toLocaleLowerCase();
+    const fileContentType = acceptedFiles[fileExt as keyof typeof acceptedFiles];
+    const fileFolderName = folder;
+    const filePath = path.join(__dirname, "..", "assets", fileFolderName, filename);
+    console.log(filePath);
+
+    // Check if file exist
+    if (!fs.existsSync(filePath)) createError({ statusCode: 404, message: "File not found" });
+
+    res.setHeader("Content-Type", fileContentType);
+    res.sendFile(filePath);
   } catch (error) {
     next(error);
   }

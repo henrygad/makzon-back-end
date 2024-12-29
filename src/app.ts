@@ -7,7 +7,7 @@ import {
   enforceHTTPS,
 } from "./middlewares/security.middleware";
 import errorHandler from "./middlewares/error.middleware";
-import createError from "./utils/error.utils";
+import createError from "./utils/error";
 import { Session } from "express-session";
 import "dotenv/config";
 
@@ -29,8 +29,8 @@ if (process.env.NODE_ENV === "production") {
   app.use(enforceHTTPS); // Enforce HTTPS
 }
 
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(express.json({limit: "100mb"})); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true, limit:"l00mb"})); // Parse URL-encoded 
 
 securityMiddleware(app); // Apply security middleware
 
