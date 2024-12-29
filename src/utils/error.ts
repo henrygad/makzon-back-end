@@ -1,4 +1,5 @@
 
+//  Reuseable custom error handler
 class customError extends Error {
   statusCode: number;
   status: string;

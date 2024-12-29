@@ -2,11 +2,12 @@ import { NextFunction, Request, Response } from "express";
 import Users, { IUser } from "../models/user.model";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
-import sendEmail from "../utils/sendEmail";
+import sendEmail from "../config/email.config";
 import "dotenv/config";
 import hideEmail from "../utils/hideEmail";
 import { validationResult } from "express-validator";
 
+// Send otp for changing email request
 export const sendChangeEmailOTP = async (
     req: Request,
     res: Response,
@@ -76,7 +77,7 @@ export const sendChangeEmailOTP = async (
         next(error);
     }
 };
-
+// Chnage email
 export const changeEmail = async (
     req: Request,
     res: Response,

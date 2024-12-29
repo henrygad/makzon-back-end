@@ -5,6 +5,7 @@ import xssClean from "xss-clean";
 import hpp from "hpp";
 import { Application, Request, Response, NextFunction } from "express";
 
+// Security middleware
 export const securityMiddleware = (app: Application) => {
   // Secure HTTP headers
   app.use(helmet());
@@ -35,7 +36,7 @@ export const securityMiddleware = (app: Application) => {
 
   app.use(limiter);
 };
-
+// Middleware to enforce redirect to https for production
 export const enforceHTTPS = (
   req: Request,
   res: Response,

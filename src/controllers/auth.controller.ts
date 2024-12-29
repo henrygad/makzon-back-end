@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
-import sendEmail from "../utils/sendEmail";
+import sendEmail from "../config/email.config";
 import "dotenv/config";
 import Users, { IUser } from "../models/user.model";
 import { SessionData } from "express-session";
 import { validationResult } from "express-validator";
 
+// Register new user
 export const register = async (
   req: Request,
   res: Response,
@@ -78,7 +79,7 @@ export const register = async (
     next(error);
   }
 };
-
+// Loign user
 export const login = async (
   err: Error,
   req: Request,
@@ -109,28 +110,28 @@ export const login = async (
     }
 
     res.status(200).json({
-      message: `Welcome back ${
-        user.userName
-      }, you've successfully login into your account`,
+      message: `Welcome back ${user.userName
+        }, you've successfully login into your account`,
     });
   } catch (error) {
     next(error);
   }
 };
-
+// Logout current user
 export const logout = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-
     const user = (req.user as IUser);
 
-    req.logOut(async () => {
+    req.logOut(async (err) => {
+      if (err) next(createError({ statusCode: 500, message: "Logout error" }));
+
       // Logout current user from db and server
       if (req.user) {
-        user.sessions =  user.sessions.filter(
+        user.sessions = user.sessions.filter(
           (session) => session.token !== req.session.id
         );
         await user.save();
@@ -144,17 +145,20 @@ export const logout = async (
       }
 
       (req.session as unknown as T).passport = { user: undefined };
-      req.session.save(() => {
+      req.session.save((err) => {
+        if (err) next(createError({ statusCode: 500, message: "Failed to save session" }));
+
         res.status(200).json({
           message: "You've successfully logout",
         });
+
       });
     });
   } catch (error) {
     next(error);
   }
 };
-
+// Logout rest user expect current user
 export const logoutRest = async (
   req: Request,
   res: Response,

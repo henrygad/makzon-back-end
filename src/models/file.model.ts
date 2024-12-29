@@ -1,11 +1,11 @@
 import mongoose, { Schema , Document, Model} from "mongoose";
-import imageProps from "../@types/image.types";
+import fileProps from "../@types/file.types";
 
-export interface IImage extends imageProps, Document<Schema.Types.ObjectId> { 
+export interface IFile extends fileProps, Document<Schema.Types.ObjectId> { 
 
 };
 
-const ImageSchema = new Schema({
+const FileSchema = new Schema({
     buffer: Buffer,
     mimetype: String,
     originalname: String,
@@ -19,7 +19,7 @@ const ImageSchema = new Schema({
     upLoader: String
 });
 
-const Images: Model<IImage> = mongoose.models.images ||
-    mongoose.model<IImage>("images", ImageSchema);
+const Files: Model<IFile> = mongoose.models.images ||
+    mongoose.model<IFile>("files", FileSchema);
 
-export default Images;
+export default Files;

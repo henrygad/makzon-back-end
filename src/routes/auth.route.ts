@@ -8,14 +8,31 @@ import {
 } from "../controllers/verification.controller";
 import createError from "../utils/error";
 import { IUser } from "../models/user.model";
-import { authValidate_changeEmail, authValidate_changeEmail_request, authValidate_changePassword, authValidate_login, authValidate_register, authValidate_resetPassword, authValidate_varification_body, authValidate_varification_query } from "../validators/auth.validator";
-import { changeEmail, sendChangeEmailOTP } from "../controllers/email.controllers";
+import {
+  authValidate_changeEmail,
+  authValidate_changeEmail_request,
+  authValidate_changePassword,
+  authValidate_login,
+  authValidate_register,
+  authValidate_resetPassword,
+  authValidate_varification_body,
+  authValidate_varification_query,
+} from "../validators/auth.validator";
+import {
+  changeEmail,
+  sendChangeEmailOTP,
+} from "../controllers/email.controllers";
 
 const router = Router();
 
 // Local authentication
 router.post("/register", authValidate_register, register);
-router.post("/login", authValidate_login, passport.authenticate("local"), login);
+router.post(
+  "/login",
+  authValidate_login,
+  passport.authenticate("local"),
+  login
+);
 
 // Google authentication
 router.get(
@@ -27,22 +44,23 @@ router.get(
   passport.authenticate("google", { failureRedirect: "/login" }),
   async (req, res, next) => {
     try {
+      const user = req.user as IUser;
       // Add current user session id to user.session array
-      if (req.user && req.session.id) {
-        (req.user as IUser).sessions.push({
-          token: req.session.id,
-          toExpire: req.session.cookie.maxAge || 0,
-        });
-        await (req.user as IUser).save();
-      } else {
+      if (!req.user || !req.session.id)
         createError({
           statusCode: 401,
           message: "Authentication failed: Session not found",
         });
-      }
+
+      user.sessions.push({
+        token: req.session.id,
+        toExpire: req.session.cookie.maxAge || 0,
+      });
+      await user.save();
+      req.user = user;
 
       res.status(200).json({
-        message: `Welcome back ${(req.user as IUser)?.userName}, you've successfully login into your account`,
+        message: `Welcome back ${user.userName}, you've successfully login into your account`,
       });
     } catch (error) {
       next(error);
@@ -58,11 +76,26 @@ router.get("/verify", authValidate_varification_query, verifyUser);
 router.post("/password", authValidate_varification_body, verifyUser);
 router.get("/password", authValidate_varification_query, verifyUser);
 router.post("/password/reset", authValidate_resetPassword, verifyUser);
-router.post("/password/change", authValidate_changePassword, isAuthenticated, verifyUser);
+router.post(
+  "/password/change",
+  authValidate_changePassword,
+  isAuthenticated,
+  verifyUser
+);
 
-// Chnage account email 
-router.post("/email", authValidate_changeEmail_request, isAuthenticated, sendChangeEmailOTP);
-router.post("/email/change", authValidate_changeEmail, isAuthenticated, changeEmail);
+// Chnage account email
+router.post(
+  "/email",
+  authValidate_changeEmail_request,
+  isAuthenticated,
+  sendChangeEmailOTP
+);
+router.post(
+  "/email/change",
+  authValidate_changeEmail,
+  isAuthenticated,
+  changeEmail
+);
 
 // Log out current login user
 router.get("/logout", isAuthenticated, logout);

@@ -3,7 +3,7 @@ import { isAuthenticated } from "../middlewares/auth.middleware";
 import Users from "../models/user.model";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
-import sendEmail from "../utils/sendEmail";
+import sendEmail from "../config/email.config.ts";
 import uploadMedia from "../middlewares/uploadMedia.middleware";
 import fs from "fs";
 import path from "path";
@@ -51,8 +51,11 @@ router.get("/email", async (_: Request, res: Response, next: NextFunction) => {
 });
 
 router.post("/docs", uploadMedia("doc", 10, async (files) => {
-  console.log(files?.length ?"true": "false");
+  console.log(files?.length ? "true" : "false");
 }));
+
+//app.use(express.static(path.join(__dirname, "public"))); // Public route
+
 
 router.get("/file/:folder/:filename", (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -60,7 +63,7 @@ router.get("/file/:folder/:filename", (req: Request, res: Response, next: NextFu
 
     // The request file info
     const fileExt = path.extname(filename).toLocaleLowerCase();
-    const fileContentType = acceptedFiles[fileExt as keyof typeof acceptedFiles];
+    const fileContentType = acceptedFiles[fileExt as keyof typeof acceptedFiles] || "application/octet-stream";
     const fileFolderName = folder;
     const filePath = path.join(__dirname, "..", "assets", fileFolderName, filename);
     console.log(filePath);
@@ -74,5 +77,18 @@ router.get("/file/:folder/:filename", (req: Request, res: Response, next: NextFu
     next(error);
   }
 });
+
+router.get("/hello", (_, res: Response) => {
+  res.status(200).json({
+    messgae: "Hello word",
+  });
+});
+
+router.get("/home", (_: Request, res: Response) => {
+  const filePath = path.join(__dirname, "..", "public", "index.html");
+  res.setHeader("Content-Type", "text/html");
+  res.sendFile(filePath);
+});
+
 
 export default router;

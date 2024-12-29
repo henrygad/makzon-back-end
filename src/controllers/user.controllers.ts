@@ -36,10 +36,6 @@ export const sendUserData = async (
     next(error);
   }
 };
-
-// Update user avatar
-
-
 // Edit and update user data to db
 export const updateUserData = async (
   req: Request,
@@ -94,7 +90,6 @@ export const updateUserData = async (
     next(error);
   }
 };
-
 // Delete user data from db
 export const deleteUserData = async (
   req: Request,

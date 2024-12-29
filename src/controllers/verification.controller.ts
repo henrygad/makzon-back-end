@@ -2,11 +2,12 @@ import { NextFunction, Request, Response } from "express";
 import Users from "../models/user.model";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
-import sendEmail from "../utils/sendEmail";
+import sendEmail from "../config/email.config";
 import "dotenv/config";
 import hideEmail from "../utils/hideEmail";
 import { validationResult } from "express-validator";
 
+// Send verification otp 
 export const sendVerificationOTP = async (
     req: Request,
     res: Response,
@@ -59,7 +60,7 @@ export const sendVerificationOTP = async (
         next(error);
     }
 };
-
+// Verify user
 export const verifyUser = async (
     req: Request,
     res: Response,

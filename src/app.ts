@@ -1,15 +1,16 @@
 import express, { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import session from "./config/session.config";
-import {authRoutes, testRoutes, userRoutes} from "./routes/index";
+import { authRoutes, testRoutes, userRoutes } from "./routes/index";
 import {
   securityMiddleware,
   enforceHTTPS,
 } from "./middlewares/security.middleware";
 import errorHandler from "./middlewares/error.middleware";
-import createError from "./utils/error";
 import { Session } from "express-session";
 import "dotenv/config";
+import createError from "./utils/error";
+import path from "path";
 
 interface CustomSession extends Session {
   visited?: boolean;
@@ -29,8 +30,8 @@ if (process.env.NODE_ENV === "production") {
   app.use(enforceHTTPS); // Enforce HTTPS
 }
 
-app.use(express.json({limit: "100mb"})); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true, limit:"l00mb"})); // Parse URL-encoded 
+app.use(express.json({ limit: "100mb" })); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true, limit: "l00mb" })); // Parse URL-encoded 
 
 securityMiddleware(app); // Apply security middleware
 
@@ -38,44 +39,24 @@ app.use(session); // Enable session support
 app.use(passport.initialize()); // Initialize Passport
 app.use(passport.session()); // Enable session support for Passport
 
-app.use("/api/auth", authRoutes); // Auth routes
-app.use("/api/auth", userRoutes); // User routes
-app.use("/api/test", testRoutes); // Testing routes
-
+app.use(express.static(path.join(__dirname, "public"))); // Public route
 app.get("/", (req: CustomRequest, res: Response) => {
-  const send = {
-    ip: req.ip,
-    protocol: req.protocol,
+  res.status(200).json({
+    message: "Hi Welcome to Makzon api",
     session: req.session,
-    user: req.user,
-  };
+    ip: [req.ip, req.ips],
+    protocal: req.protocol
+  });
+}); // Base end point 
+app.use("/api/auth", authRoutes); // Auth routes
+app.use("/api/user", userRoutes); // User routes
+app.use("/api/file", userRoutes); // File routes
 
-  if (req.session?.visited) {
-    // Check if the session was modified
-    res.status(200).json({
-      message: "Welcome to our website dear client for the first time",
-      ...send,
-    });
-  } else {
-    req.session.visited = true; // Modify session
-    res.status(200).json({
-      message: "Welcome back dear client",
-      ...send,
-    });
-  }
-});
-
+app.use("/api/test", testRoutes); // Testing routes
 app.all("*", (req: Request, _: Response, next: NextFunction) => {
-  try {
-    createError({
-      statusCode: 404,
-      message: `Can't find ${req.method} ${req.originalUrl}`,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+  next(createError({ statusCode: 404, message: `Route not found ${req.originalUrl}`, }));
+}); // Not found route
 
-app.use(errorHandler);
+app.use(errorHandler); // Error middleware
 
 export default app;

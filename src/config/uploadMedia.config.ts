@@ -43,7 +43,7 @@ const storage = multer.diskStorage({
   },
   filename(_, file, callback) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const filename = `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`;
+    const filename = `${uniqueSuffix}${path.extname(file.originalname)}`;
     callback(null, filename);
   },
 });

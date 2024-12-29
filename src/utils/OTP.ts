@@ -1,5 +1,7 @@
 import crypto from "crypto";
 
+
+// Function to genenerate unique otp
 export const OTP = (num: number) => {
   let otp = "";
   const characters = "P1r3Z5q7i9";

@@ -2,11 +2,12 @@ import { NextFunction, Request, Response } from "express";
 import Users, { IUser } from "../models/user.model";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
-import sendEmail from "../utils/sendEmail";
+import sendEmail from "../config/email.config";
 import "dotenv/config";
 import hideEmail from "../utils/hideEmail";
 import { validationResult } from "express-validator";
 
+// Send reset password otp
 export const sendResetOTP = async (
   req: Request,
   res: Response,
@@ -61,7 +62,7 @@ export const sendResetOTP = async (
     next(error);
   }
 };
-
+// verify otp
 export const verifyResetOTP = async (
   req: Request,
   res: Response,
@@ -103,7 +104,7 @@ export const verifyResetOTP = async (
     next(error);
   }
 };
-
+// reset password
 export const resetPassword = async (
   req: Request,
   res: Response,
@@ -154,7 +155,7 @@ export const resetPassword = async (
     next(error);
   }
 };
-
+// chnage passwprd
 export const changePassword = async (
   req: Request,
   res: Response,
