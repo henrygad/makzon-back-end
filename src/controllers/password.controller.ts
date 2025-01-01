@@ -15,11 +15,9 @@ export const sendResetOTP = async (
 ) => {
   try {
 
-    // Validate user input
+     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return next(createError({ statusCode: 400, message: errors.array()[0].msg }));
-    }
+    if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
 
     const { email }: {email: string} = req.body;
 
@@ -70,12 +68,6 @@ export const verifyResetOTP = async (
 ) => {
   try {
 
-    // Validate user input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return next(createError({ statusCode: 400, message: errors.array()[0].msg }));
-    }
-
     const { email, otp } = req.query as { email: string, otp: string };
 
     // Verify OTP token sent by user
@@ -112,11 +104,9 @@ export const resetPassword = async (
 ) => {
   try {
 
-    // Validate user input
+     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return next(createError({ statusCode: 400, message: errors.array()[0].msg }));
-    }
+    if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
 
     const { email, newPassword }:
       { email: string, newPassword: string } = req.body;
@@ -163,11 +153,9 @@ export const changePassword = async (
 ) => {
   try {
 
-    // Validate user input
+     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return next(createError({ statusCode: 400, message: errors.array()[0].msg }));
-    }
+    if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
     
     const { oldPassword, newPassword }:
       { oldPassword: string, newPassword: string } = req.body;

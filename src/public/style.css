@@ -1,8 +1,30 @@
-    div {
-        width: 100%;
-        text-align: center;
-    }
+   .screen{
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content:  center;
+    padding-block: 20px;
+   };
+   .screen > div {
+    min-width: 280px;
+   }
 
+   .profile_name{
+    font-size: 20px;
+    font-weight: bold;
+   }
+   .profile_user_name{
+    font-size: 16px;
+    font-weight:500;
+   }
+   .hero{
+    display: flex;
+    gap: 20px;
+    align-items: center;
+   }
+   .forms_wrapper{
+    margin-top: 20px;
+   }
     p {
         font-size: 30px;
         color: blue;
@@ -17,4 +39,8 @@
         padding: 10px;
         box-shadow: 10px 10px 10px lightblue;
         cursor: pointer;
+    }
+    .video{
+        width: 400px;
+        height: 200px;
     }

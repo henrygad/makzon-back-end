@@ -16,11 +16,9 @@ export const sendVerificationOTP = async (
     try {
         // Validate user input
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return next(createError({ statusCode: 400, message: errors.array()[0].msg }));
-        }
+        if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
 
-        const { email }: {email: string}= req.body;
+        const { email }: { email: string } = req.body;
 
         // Find user
         const user = await Users.findOne({ email });
@@ -70,9 +68,7 @@ export const verifyUser = async (
 
         // Validate user input
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return next(createError({ statusCode: 400, message: errors.array()[0].msg }));
-        }
+        if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
 
         const { email, otp } = req.query as { email: string, otp: string };
 

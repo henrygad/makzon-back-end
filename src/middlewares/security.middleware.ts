@@ -21,6 +21,15 @@ export const securityMiddleware = (app: Application) => {
     );
   }
 
+  // Content Security Policy (CSP)
+  app.use((_, res: Response, next: NextFunction) => {
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'self'; media-src 'self' blob:;"
+    );
+    next();
+  });
+  
   // Sanitize inputs to prevent XSS (cross-site scripting) attack
   app.use(xssClean());
 
@@ -36,6 +45,7 @@ export const securityMiddleware = (app: Application) => {
 
   app.use(limiter);
 };
+
 // Middleware to enforce redirect to https for production
 export const enforceHTTPS = (
   req: Request,

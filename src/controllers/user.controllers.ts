@@ -43,13 +43,12 @@ export const updateUserData = async (
   next: NextFunction
 ) => {
 
-  // Validate user input
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(createError({ statusCode: 400, message: errors.array()[0].msg }));
-  }
-
   try {
+
+    // Validate user input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
+
     const {
       name,
       dateOfBirth,
@@ -100,9 +99,8 @@ export const deleteUserData = async (
 
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return next(createError({ statusCode: 400, message: errors.array()[0].msg }));
-    }
+    if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
+
 
     const { password }: { password: string } = req.body;
     const user = (req.user as IUser);

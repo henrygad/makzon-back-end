@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+    <div class="screen">
+        <div>
+            <div class="profile">
+                <h2 class="profile_name">Hi welcome {{name}}</h2>
+                <p class="profile_user_name">Your account role is {{role}}</p>
+            </div>
+            <div class="hero">
+                <p>Hellow world</p>
+                <button id="click_me_btn">
+                    click me
+                </button>
+            </div>
+            <div class="forms_wrapper">
+                <div>
+                    <div>upload image</div>
+                    <form action="https://localhost:3000/api/file/image" method="post" enctype="multipart/form-data">
+                        <input type="file" accept="image/*" name="images" multiple> 
+                        <button>
+                            Upload
+                        </button>
+                    </form>
+                </div>                
+                <div>
+                    <div>upload video</div>
+                    <form action="https://localhost:3000/api/file/video" method="post" enctype="multipart/form-data">
+                        <input type="file" accept="video/*" name="videos" multiple> 
+                        <button>
+                            Upload
+                        </button>
+                    </form>
+                </div>                
+                <div>
+                    <div>upload audio</div>
+                    <form action="https://localhost:3000/api/file/audio" method="post" enctype="multipart/form-data">
+                        <input type="file" accept="audio/*" name="audios" multiple> 
+                        <button>
+                            Upload
+                        </button>
+                    </form>
+                </div>                
+                <div>
+                    <div>upload doc</div>
+                    <form action="https://localhost:3000/api/file/doc" method="post" enctype="multipart/form-data">
+                        <input type="file" accept="doc/*" name="docs" multiple> 
+                        <button>
+                            Upload
+                        </button>
+                    </form>
+                </div>                
+                <div>
+                    <div>upload archive</div>
+                    <form action="https://localhost:3000/api/file/archive" method="post" enctype="multipart/form-data">
+                        <input type="file" accept=".zip" name="archives" multiple> 
+                        <button>
+                            Upload
+                        </button>
+                    </form>
+                </div>                
+            </div>
+            <div>
+                <div>Display video</div>
+                <div id="display_video">
+                    <!-- <video controls  class="video" >
+                        <source src="https://localhost:3000/api/file/videos/1735562911109-291751540.webm" type="video/webm" >
+                    </video> -->
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<footer>
+    <script type="module" src="./script.js"></script>
+</footer>
+</html>

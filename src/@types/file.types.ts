@@ -3,18 +3,16 @@ import mongoose from "mongoose";
 
 type imageUser = {
     _id: mongoose.ObjectId
-    buffer: Buffer<ArrayBufferLike>
-    mimetype:  string
-    originalname: string
-    filename: string
-    size: number
     fieldname: string
-    path: string
-    stream: ReadableStream
-    destination: string
+    originalname: string
     encoding: string
+    mimetype:  string
+    destination: string
+    filename: string
+    path: string
+    size: number
     upLoader: string
-    
 };
+
 
 export default imageUser;

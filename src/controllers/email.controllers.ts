@@ -16,13 +16,9 @@ export const sendChangeEmailOTP = async (
     try {
         // Validate user input
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return next(
-                createError({ statusCode: 400, message: errors.array()[0].msg })
-            );
-        }
+        if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
 
-        const { email } : {email: string} = req.body;
+        const { email }: { email: string } = req.body;
         const newEmail = email; // Reasign incoming email as new email
         const user = req.user as IUser;
 
@@ -87,11 +83,7 @@ export const changeEmail = async (
 
         // Validate user input
         const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return next(
-                createError({ statusCode: 400, message: errors.array()[0].msg })
-            );
-        }
+        if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
 
         const { newEmail, otp }:
             { newEmail: string, otp: string } = req.body;

@@ -11,7 +11,7 @@ const errorHandler = (err: ErrorWithStatus, req: Request, res: Response, next: N
   res.status(err.statusCode).json({
     ...err,
     message: err.message || "Server Error",
-    stack: process.env.NODE_ENV === "production" ? null : err.stack,
+    stack: err.stack, // process.env.NODE_ENV === "production" ? null : err.stack,
     date: Date(),
     targetUrl: req.originalUrl
   });

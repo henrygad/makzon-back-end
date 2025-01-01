@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import session from "./config/session.config";
-import { authRoutes, testRoutes, userRoutes } from "./routes/index";
+import { authRoutes, fileRoutes, testRoutes, userRoutes } from "./routes/index";
 import {
   securityMiddleware,
   enforceHTTPS,
@@ -11,6 +11,7 @@ import { Session } from "express-session";
 import "dotenv/config";
 import createError from "./utils/error";
 import path from "path";
+import fs from "fs";
 
 interface CustomSession extends Session {
   visited?: boolean;
@@ -40,18 +41,25 @@ app.use(passport.initialize()); // Initialize Passport
 app.use(passport.session()); // Enable session support for Passport
 
 app.use(express.static(path.join(__dirname, "public"))); // Public route
-app.get("/", (req: CustomRequest, res: Response) => {
-  res.status(200).json({
-    message: "Hi Welcome to Makzon api",
-    session: req.session,
-    ip: [req.ip, req.ips],
-    protocal: req.protocol
+app.get("/", (req: CustomRequest, res: Response, next: NextFunction) => {
+  if (!req.session.visited) req.session.visited = true; // Modify session
+
+  const filePath = path.join(__dirname, "public", "home.html");
+  if (!fs.existsSync(filePath)) createError({ statusCode: 404, message: "Page not found" });
+
+  fs.readFile(filePath, "utf-8", (err, file) => { 
+    if (err) next(createError({ statusCode: 500, message: "Failed to read index.html file" }));
+    const dynamicFile = file
+      .replace("{{name}}", "Henry gad")
+      .replace("{{role}}", "Developer");
+    
+    res.header("Content-Type", "text/html");
+    res.status(200).send(dynamicFile);
   });
-}); // Base end point 
+}); // Base end point
 app.use("/api/auth", authRoutes); // Auth routes
 app.use("/api/user", userRoutes); // User routes
-app.use("/api/file", userRoutes); // File routes
-
+app.use("/api/file", fileRoutes); // File routes
 app.use("/api/test", testRoutes); // Testing routes
 app.all("*", (req: Request, _: Response, next: NextFunction) => {
   next(createError({ statusCode: 404, message: `Route not found ${req.originalUrl}`, }));
