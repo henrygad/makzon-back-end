@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import Users from "../models/user.model";
-import userProps from "../@types/user.types";
+import userProps from "../types/user.type";
 import generatedUserName from "../utils/generateUserName";
 
 passport.use(
@@ -13,11 +13,15 @@ passport.use(
 
       // Check if user exist by username or email
       const user = await Users.findOne({ $or: [{ userName }, { email: userName }] });
-      if (!user) return done({ message: "Username: Invalid credentials" }, false);
+      if (!user) return done({
+        message: "Username: Invalid credentials", statusCode: 401, status: "fail", isOperational: true
+      }, false);
 
       // Comapre incoming passwords with hashed password
       const isMatch = await user.isValidPassword(password);
-      if (!isMatch) return done({ message: "Password: Invalid credentials" }, false);
+      if (!isMatch) return done({
+        message: "Password: Invalid credentials", statusCode: 401, status: "fail", isOperational: true
+      }, false);
 
       return done(null, user);
     }
@@ -32,7 +36,7 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL: "/api/auth/google/callback",
     },
-    async (_, accessToken, profile, done) => {
+    async (_accessToken, _refreshToken, profile, done) => {
       const { id, displayName, emails } = profile;
       const emailValue = emails?.[0].value;
 
@@ -53,7 +57,6 @@ passport.use(
         await user.save();
       };
 
-      console.log(accessToken ? " " : " ");
       return done(null, user); // Send user data
     }
   )

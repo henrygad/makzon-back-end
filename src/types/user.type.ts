@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 type userProps = {
-  _id: mongoose.ObjectId;
+  _id:  mongoose.Schema.Types.ObjectId;
   userName: string;
   email: string;
   password: string;
@@ -26,12 +26,16 @@ type userProps = {
   displayEmail: string;
   displayPhoneNumber: string;
   website: string;
-  profession: [string];
+  profession: string[];
   country: string;
   sex: string;
   bio: string;
   followings: string[];
-  interest: string[]
+  followers: string[];
+  timeline: string[];
+  saves: string[];
+  createdAt: Date,
+  updatedAt: Date,
 };
 
 

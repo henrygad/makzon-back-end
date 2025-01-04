@@ -35,7 +35,6 @@ export const sendFile = (req: Request, res: Response, next: NextFunction) => {
     try {
 
         const { fieldname, filename } = req.params;
-        console.log(req.params);
         // The requested file path
         const filePath = path.join(__dirname, "..", "assets", fieldname, filename);
         if (!fs.existsSync(filePath)) createError({ statusCode: 404, message: "File path not found" }); // Check if file exist
@@ -81,8 +80,8 @@ export const uploadFile = async (req: Request, res: Response, next: NextFunction
 
         if (!req.file && !req.files?.length) createError({ statusCode: 400, message: "No file uploaded" });
         const getFiles = req.file || req.files;
-        //const files = new Files({ ...getFiles, uploader: "henry" });
-        //await files.save();
+        const files = new Files({ ...getFiles, uploader: "henry" });
+        await files.save();
 
         res.status(201).json({
             message: "Successfuly uploader file",

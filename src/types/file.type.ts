@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
 
-
 type imageUser = {
-    _id: mongoose.ObjectId
+    _id:  mongoose.Schema.Types.ObjectId
     fieldname: string
     originalname: string
     encoding: string
@@ -13,6 +12,5 @@ type imageUser = {
     size: number
     upLoader: string
 };
-
 
 export default imageUser;

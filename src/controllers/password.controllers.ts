@@ -8,18 +8,18 @@ import hideEmail from "../utils/hideEmail";
 import { validationResult } from "express-validator";
 
 // Send reset password otp
-export const sendResetOTP = async (
+export const sendForgetPasswordOTP = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
 
-     // Validate user input
+    // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
+    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { email }: {email: string} = req.body;
+    const { email }: { email: string } = req.body;
 
     // Find user
     const user = await Users.findOne({ email });
@@ -30,7 +30,7 @@ export const sendResetOTP = async (
     const expireOn: number = Date.now() + 15 * 60 * 1000; // expires in 15 minutes
     const url =
       process.env.DOMAIN_NAME +
-      `/api/auth/password?email=${user?.email}otp=${otp}`;
+      `/api/auth/password/forget?email=${user?.email}&otp=${otp}`;
 
     // Send OTP token to user mail box
     const result = await sendEmail({
@@ -60,8 +60,8 @@ export const sendResetOTP = async (
     next(error);
   }
 };
-// verify otp
-export const verifyResetOTP = async (
+// Verify otp
+export const verifyForgetPasswordOTP = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -96,7 +96,7 @@ export const verifyResetOTP = async (
     next(error);
   }
 };
-// reset password
+// Reset password
 export const resetPassword = async (
   req: Request,
   res: Response,
@@ -104,9 +104,9 @@ export const resetPassword = async (
 ) => {
   try {
 
-     // Validate user input
+    // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
+    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { email, newPassword }:
       { email: string, newPassword: string } = req.body;
@@ -130,9 +130,10 @@ export const resetPassword = async (
           statusCode: 400,
           message: "New password cannot be the same as old password",
         });
-      
+
       user.forgetPassWordTokenExpiringdate = 0;
       user.password = newPassword;
+      user.markModified("password");
       await user.save();
     }
 
@@ -153,38 +154,35 @@ export const changePassword = async (
 ) => {
   try {
 
-     // Validate user input
+    // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
-    
+    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
     const { oldPassword, newPassword }:
       { oldPassword: string, newPassword: string } = req.body;
     const user = (req.user as IUser);
 
-    if (user) {
-      const sameAsOld = await user.isValidPassword(newPassword);
-      if (sameAsOld)
-        createError({
-          statusCode: 400,
-          message: "New password cannot be the same as old password",
-        });
+    // Check if old password is valid
+    const isMatch = await user.isValidPassword(oldPassword);
+    if (!isMatch)
+      createError({ statusCode: 401, message: "Invalid password" });
 
-      const isMatch = await user.isValidPassword(oldPassword);
-      if (isMatch)
-        createError({ statusCode: 401, message: "Invalid password" });
+    // Check if new password is the same as old password
+    const sameAsOld = await user.isValidPassword(newPassword);
+    if (sameAsOld)
+      createError({
+        statusCode: 400,
+        message: "New password cannot be the same as old password",
+      });
 
-      if (isMatch) {
-        // Change user password
-        user.password = newPassword;
-        await user.save();
-        req.user = user;
-      }
-    }
+    // Change user password
+    user.password = newPassword;
+    user.markModified("password");
+    req.user = await user.save();
 
     res.status(200).json({
       message:
         "Password has been successfully changed. Would you like to logout from all devise, but keep you login on this devise?",
-      logOutAllDeviseUrl: "/api/auth/logout/all",
+      logOutAllDeviseUrl: "/api/auth/logout/rest",
     });
   } catch (error) {
     next(error);

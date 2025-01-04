@@ -9,7 +9,7 @@ const fileValidate_query = [
 const fileValidate_param = [
     param(["fieldname","filename"])
         .trim()
-        .isString().withMessage("Fields must be a string")
+        .isString().withMessage("fieldname, filename must be a string")
         .escape(),
 ];
 

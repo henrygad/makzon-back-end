@@ -16,19 +16,18 @@ export const sendChangeEmailOTP = async (
     try {
         // Validate user input
         const errors = validationResult(req);
-        if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
+        if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-        const { email }: { email: string } = req.body;
-        const newEmail = email; // Reasign incoming email as new email
+        const { newEmail }: { newEmail: string } = req.body;
         const user = req.user as IUser;
 
-        // Validate cannot use this email
+        // Check if the new email is the same as the current email
         let cannotUseEmail: boolean | null = user.email === newEmail;
         if (cannotUseEmail) createError({ statusCode: 400, message: "New email cannot be the same as current email" });
         cannotUseEmail = await Users.findOne({ email: newEmail });
         if (cannotUseEmail) createError({ statusCode: 400, message: "Email is already in use" });
 
-        // Send OTP token to the old email box
+        // Send email to the current email box
         await sendEmail({
             emailTo: user.email,
             subject: "Change account email request",
@@ -37,11 +36,11 @@ export const sendChangeEmailOTP = async (
            If you didn't make this requst please contact us or login to you account and change your password`,
         });
 
-        // Generate and send OTP token to new email
+        // Generate OTP token 
         const otp = OTP(4);
         const expireOn: number = Date.now() + 15 * 60 * 1000; // expires in 15 minutes
 
-        // Send OTP token to the new email box
+        // Send OTP to new email
         const result = await sendEmail({
             emailTo: newEmail,
             subject: "Change account email OTP request",
@@ -55,14 +54,11 @@ export const sendChangeEmailOTP = async (
                 message: "Failed to send verification email",
             });
 
-        // Store OTP to user data
-        if (user) {
-            user.changeEmailVerificationToken = otp;
-            user.changeEmailVerificationTokenExpiringdate = expireOn;
-            user.requestChangeEmail = newEmail;
-            await user.save();
-            req.user = user;
-        }
+        // Store OTP to user data       
+        user.changeEmailVerificationToken = otp;
+        user.changeEmailVerificationTokenExpiringdate = expireOn;
+        user.requestChangeEmail = newEmail;
+        req.user = await user.save();
 
         res.status(200).json({
             message:
@@ -83,7 +79,7 @@ export const changeEmail = async (
 
         // Validate user input
         const errors = validationResult(req);
-        if (!errors.isEmpty()) createError({ statusCode: 400, message: errors.array()[0].msg });
+        if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
         const { newEmail, otp }:
             { newEmail: string, otp: string } = req.body;
@@ -104,8 +100,7 @@ export const changeEmail = async (
             user.changeEmailVerificationTokenExpiringdate = 0;
             user.requestChangeEmail = "";
             user.email = newEmail;
-            await user.save();
-            req.user = user;
+            req.user = await user.save();
         };
 
         res.status(200).json({

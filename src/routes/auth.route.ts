@@ -1,35 +1,34 @@
 import { Router } from "express";
-import { register, login, logout } from "../controllers/auth.controller";
+import { register, logout, login, logoutRest} from "../controllers/auth.controllers";
 import passport from "../config/passport.config";
 import { isAuthenticated } from "../middlewares/auth.middleware";
 import {
   sendVerificationOTP,
   verifyUser,
-} from "../controllers/verification.controller";
-import createError from "../utils/error";
-import { IUser } from "../models/user.model";
+} from "../controllers/verification.controllers";
 import {
-  authValidate_changeEmail,
-  authValidate_changeEmail_request,
-  authValidate_changePassword,
-  authValidate_login,
-  authValidate_register,
-  authValidate_resetPassword,
-  authValidate_varification_body,
-  authValidate_varification_query,
+  authValidator_changeEmail,
+  authValidator_changeEmail_request,
+  authValidator_changePassword,
+  authValidator_login,
+  authValidator_register,
+  authValidator_resetPassword,
+  authValidator_varification_body,
+  authValidator_varification_query,
 } from "../validators/auth.validator";
 import {
   changeEmail,
   sendChangeEmailOTP,
 } from "../controllers/email.controllers";
+import { changePassword, resetPassword, sendForgetPasswordOTP, verifyForgetPasswordOTP } from "../controllers/password.controllers";
 
 const router = Router();
 
 // Local authentication
-router.post("/register", authValidate_register, register);
+router.post("/register", authValidator_register, register);
 router.post(
   "/login",
-  authValidate_login,
+  authValidator_login,
   passport.authenticate("local"),
   login
 );
@@ -42,62 +41,41 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
-  async (req, res, next) => {
-    try {
-      const user = req.user as IUser;
-      // Add current user session id to user.session array
-      if (!req.user || !req.session.id)
-        createError({
-          statusCode: 401,
-          message: "Authentication failed: Session not found",
-        });
-
-      user.sessions.push({
-        token: req.session.id,
-        toExpire: req.session.cookie.maxAge || 0,
-      });
-      await user.save();
-      req.user = user;
-
-      res.status(200).json({
-        message: `Welcome back ${user.userName}, you've successfully login into your account`,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  login
 );
 
 // Verify user
-router.post("/verify", authValidate_varification_body, sendVerificationOTP);
-router.get("/verify", authValidate_varification_query, verifyUser);
+router.post("/verify", authValidator_varification_body, sendVerificationOTP);
+router.get("/verify", authValidator_varification_query, verifyUser);
 
 // Reset or change password
-router.post("/password", authValidate_varification_body, verifyUser);
-router.get("/password", authValidate_varification_query, verifyUser);
-router.post("/password/reset", authValidate_resetPassword, verifyUser);
+router.post("/password/forget", authValidator_varification_body, sendForgetPasswordOTP);
+router.get("/password/forget", authValidator_varification_query, verifyForgetPasswordOTP);
+router.post("/password/reset", authValidator_resetPassword, resetPassword);
 router.post(
   "/password/change",
-  authValidate_changePassword,
+  authValidator_changePassword,
   isAuthenticated,
-  verifyUser
+  changePassword
 );
 
 // Chnage account email
 router.post(
   "/email",
-  authValidate_changeEmail_request,
+  authValidator_changeEmail_request,
   isAuthenticated,
   sendChangeEmailOTP
 );
 router.post(
   "/email/change",
-  authValidate_changeEmail,
+  authValidator_changeEmail,
   isAuthenticated,
   changeEmail
 );
 
-// Log out current login user
-router.get("/logout", isAuthenticated, logout);
+// Logout
+router.get("/logout", logout); // current user
+router.get("/logout/rest", logoutRest); // rest of the users in this account
+
 
 export default router;

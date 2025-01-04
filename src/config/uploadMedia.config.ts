@@ -1,6 +1,7 @@
 import multer from "multer";
 import path from "path";
 import acceptedFiles from "../utils/fileFromat";
+import createError from "../utils/error";
 
 // Config media storage
 const storage = multer.diskStorage({
@@ -59,9 +60,8 @@ const upload = multer({
     const fileExt = path.extname(file.originalname).toLocaleLowerCase();
     const accepted_ext = acceptedFiles[fileExt as keyof typeof acceptedFiles]; // Validate the file extention
     const accepted_mimeType = accepted_ext === file.mimetype; // Validate the file mime type
-    console.log(accepted_mimeType);
-    if (!accepted_mimeType) callback(null, false);
-
+    if (!accepted_mimeType) callback(createError({ statusCode: 415, message: "Unsupported file type" }), false);
+    
     callback(null, true);
   },
 });

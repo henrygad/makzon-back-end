@@ -44,3 +44,12 @@
         width: 400px;
         height: 200px;
     }
+    .sse{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 40px;
+        height: 300px;
+        margin-top: 30px;
+    }

@@ -1,24 +1,37 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { isAuthenticated } from "../middlewares/auth.middleware";
 import Users from "../models/user.model";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../config/email.config";
 import path from "path";
 import fs from "fs";
+import Sessions from "../models/session.model";
 
 const router = Router();
 
 router.get(
   "/users",
-  isAuthenticated,
   async (_: Request, res: Response, next: NextFunction) => {
     try {
       const users = await Users.find();
-      if (!users.length)
-        createError({ statusCode: 404, message: "No users found" });
+      if (!users.length) createError({ statusCode: 404, message: "No users found" });
+      const session = await Sessions.find();
 
-      res.status(200).json({ message: "Welcome to users route", users });
+      res.status(200).json({ message: "Welcome to users route", users, session });
+    } catch (error: unknown) {
+      next(error);
+    }
+  }
+);
+
+router.delete(
+  "/users",
+  async (_: Request, res: Response, next: NextFunction) => {
+    try {
+      const users = await Users.deleteMany();
+      if (!users) createError({ statusCode: 404, message: "No users found" });
+
+      res.status(200).json({ message: "All users delted" });
     } catch (error: unknown) {
       next(error);
     }
@@ -48,7 +61,6 @@ router.get("/email", async (_: Request, res: Response, next: NextFunction) => {
   }
 });
 
-
 // html streaming
 router.get("/", (_: Request, res: Response, next: NextFunction) => {
   const filePath = path.join(__dirname, "..", "public", "text.txt");
@@ -77,3 +89,35 @@ router.get("/", (_: Request, res: Response, next: NextFunction) => {
 
 
 export default router;
+
+
+/* 
+
+// Middleware to upload multipart form-data (files)
+const uploadMedia = (fieldname: string, max: number, callback: (files: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[]; } | undefined) => void = () => null) => {
+    return async (req: Request, res: Response, next: NextFunction) =>
+        upload.array(fieldname, max)(req, res, async (err) => {
+            try {
+                if (err) {
+                    // Check if File(s) exceeds the file size limit to accept
+                    if (err.code === "LIMIT_FILE_SIZE") createError({ statusCode: 400, message: "File size is too large" });
+                    createError({ statusCode: 400, message: "An error occurred!" });
+                };
+
+                // callback 
+                callback(req.files);
+
+                res.status(201).json({
+                    message: "File uploaded successfully",
+                    files: req.files
+                });
+            } catch (error) {
+
+                next(error);
+            }
+
+        });
+};
+
+
+*/

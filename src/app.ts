@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import passport from "passport";
 import session from "./config/session.config";
-import { authRoutes, fileRoutes, testRoutes, userRoutes } from "./routes/index";
+import { authRoutes, fileRoutes, testRoutes, userRoutes, SSE, postRoutes } from "./routes/index";
 import {
   securityMiddleware,
   enforceHTTPS,
@@ -16,10 +16,10 @@ import fs from "fs";
 interface CustomSession extends Session {
   visited?: boolean;
 }
-
 interface CustomRequest extends Request {
   session: CustomSession;
 }
+
 
 const app = express();
 
@@ -42,7 +42,10 @@ app.use(passport.session()); // Enable session support for Passport
 
 app.use(express.static(path.join(__dirname, "public"))); // Public route
 app.get("/", (req: CustomRequest, res: Response, next: NextFunction) => {
-  if (!req.session.visited) req.session.visited = true; // Modify session
+  if (!req.session.visited) { // Modify session
+    req.session.visited = true;
+    req.session.save();
+  } 
 
   const filePath = path.join(__dirname, "public", "home.html");
   if (!fs.existsSync(filePath)) createError({ statusCode: 404, message: "Page not found" });
@@ -59,7 +62,10 @@ app.get("/", (req: CustomRequest, res: Response, next: NextFunction) => {
 }); // Base end point
 app.use("/api/auth", authRoutes); // Auth routes
 app.use("/api/user", userRoutes); // User routes
+app.use("/api/post", postRoutes); // Post routes
 app.use("/api/file", fileRoutes); // File routes
+
+app.use("/api/sse", SSE); // SSE routes
 app.use("/api/test", testRoutes); // Testing routes
 app.all("*", (req: Request, _: Response, next: NextFunction) => {
   next(createError({ statusCode: 404, message: `Route not found ${req.originalUrl}`, }));
