@@ -162,7 +162,7 @@ export const editAuthUserSaves = async (
       data: { save },
       message: "User saves updated Successfully",
     });
-  } catch (error) {
+  } catch (error: unknown) {
     next(error);
   }
 };
