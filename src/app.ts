@@ -1,25 +1,21 @@
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import passport from "passport";
 import session from "./config/session.config";
-import { authRoutes, fileRoutes, testRoutes, userRoutes, SSE, postRoutes } from "./routes/index";
 import {
-  securityMiddleware,
-  enforceHTTPS,
-} from "./middlewares/security.middleware";
+  authRoutes,
+  fileRoutes,
+  testRoutes,
+  userRoutes,
+  postRoutes,
+  commentRoutes,
+  searchRoutes,
+  draftRoutes,
+  baseRoute,
+} from "./routes/index";
+import { security, enforceHTTPS } from "./middlewares/security.middleware";
 import errorHandler from "./middlewares/error.middleware";
-import { Session } from "express-session";
 import "dotenv/config";
-import createError from "./utils/error";
-import path from "path";
-import fs from "fs";
-
-interface CustomSession extends Session {
-  visited?: boolean;
-}
-interface CustomRequest extends Request {
-  session: CustomSession;
-}
-
+import { notFound } from "./controllers/404.controller";
 
 const app = express();
 
@@ -32,44 +28,25 @@ if (process.env.NODE_ENV === "production") {
 }
 
 app.use(express.json({ limit: "100mb" })); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true, limit: "l00mb" })); // Parse URL-encoded 
+app.use(express.urlencoded({ extended: true, limit: "l00mb" })); // Parse URL-encoded
 
-securityMiddleware(app); // Apply security middleware
+security(app); // Apply security middleware
 
 app.use(session); // Enable session support
 app.use(passport.initialize()); // Initialize Passport
 app.use(passport.session()); // Enable session support for Passport
 
-app.use(express.static(path.join(__dirname, "public"))); // Public route
-app.get("/", (req: CustomRequest, res: Response, next: NextFunction) => {
-  if (!req.session.visited) { // Modify session
-    req.session.visited = true;
-    req.session.save();
-  } 
-
-  const filePath = path.join(__dirname, "public", "home.html");
-  if (!fs.existsSync(filePath)) createError({ statusCode: 404, message: "Page not found" });
-
-  fs.readFile(filePath, "utf-8", (err, file) => { 
-    if (err) next(createError({ statusCode: 500, message: "Failed to read index.html file" }));
-    const dynamicFile = file
-      .replace("{{name}}", "Henry gad")
-      .replace("{{role}}", "Developer");
-    
-    res.header("Content-Type", "text/html");
-    res.status(200).send(dynamicFile);
-  });
-}); // Base end point
+app.use("/api", baseRoute); // Base api
 app.use("/api/auth", authRoutes); // Auth routes
 app.use("/api/user", userRoutes); // User routes
 app.use("/api/post", postRoutes); // Post routes
+app.use("/api/comment", commentRoutes); // Comment routes
+app.use("/api/draft", draftRoutes); // Draft routes
+app.use("/api/notification", commentRoutes); // Notification routes
 app.use("/api/file", fileRoutes); // File routes
-
-app.use("/api/sse", SSE); // SSE routes
+app.use("/api/search", searchRoutes); // Search routes
 app.use("/api/test", testRoutes); // Testing routes
-app.all("*", (req: Request, _: Response, next: NextFunction) => {
-  next(createError({ statusCode: 404, message: `Route not found ${req.originalUrl}`, }));
-}); // Not found route
+app.all("/api/*", notFound); // Not found route
 
 app.use(errorHandler); // Error middleware
 

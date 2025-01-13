@@ -4,13 +4,14 @@ import rateLimit from "express-rate-limit";
 import xssClean from "xss-clean";
 import hpp from "hpp";
 import { Application, Request, Response, NextFunction } from "express";
+import sanitize from "./sanitize.middleware";
 
 // Security middleware
-export const securityMiddleware = (app: Application) => {
+export const security = (app: Application) => {
   // Secure HTTP headers
   app.use(helmet());
 
-  // Enable CORS for trusted domains
+  // Enable CORS for the frontend
   if (process.env.SAME_ORIGIN === "false") {
     app.use(
       cors({
@@ -21,8 +22,8 @@ export const securityMiddleware = (app: Application) => {
     );
   }
 
-  // Content Security Policy (CSP)
-  app.use((_, res: Response, next: NextFunction) => {
+ // Set Content-Security-Policy header
+  app.use((_req: Request, res: Response, next: NextFunction) => {
     res.setHeader(
       "Content-Security-Policy",
       "default-src 'self'; media-src 'self' blob:;"
@@ -30,13 +31,14 @@ export const securityMiddleware = (app: Application) => {
     next();
   });
   
-  // Sanitize inputs to prevent XSS (cross-site scripting) attack
+  // Prevent XSS attacks
   app.use(xssClean());
+  app.use(sanitize); // ( Deep sanitize )
 
-  // Prevent HTTP Parameter Pollution
+ // Prevent HTTP Parameter Pollution
   app.use(hpp());
 
-  // Apply rate limiting
+ // Rate limiting
   app.use(rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Limit each IP to 100 requests per `windowMs`
@@ -44,7 +46,7 @@ export const securityMiddleware = (app: Application) => {
   }));
 };
 
-// Middleware to enforce redirect to https for production
+// Enforce HTTPS
 export const enforceHTTPS = (
   req: Request,
   res: Response,

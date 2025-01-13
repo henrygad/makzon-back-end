@@ -6,6 +6,7 @@ type notificationProps = {
     message: string,
     url: string,
     from: string,
+    to: string
     checked: boolean,
 };
 

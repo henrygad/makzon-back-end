@@ -1,7 +1,7 @@
 import { body, param, query } from "express-validator";
 
 export const getPostsValidator = [
-    query(["author", "status", "updatedAt"]).optional().trim().isString().withMessage("author, status, updatedAt, must be a string").escape(),
+    query(["author", "status", "catigory", "updatedAt"]).optional().trim().isString().withMessage("author, status, catigory, updatedAt, must all be a string").escape(),
     query(["skip", "limit"]).optional().trim().isNumeric().withMessage("Skip, Limit must be a number").escape(),
 ];
 export const validatePostParam = [
@@ -10,7 +10,8 @@ export const validatePostParam = [
 export const validatePostQueries = [
     query(["skip", "limit"]).optional().trim().isNumeric().withMessage("Skip, Limit must be a number").escape(),
 ];
-export const addNewPostValidator = [
+export const addPostValidator = [
+    body("publishedId").optional().isMongoId().withMessage("Invalid post id").escape(),
     body("image").optional().trim().isString().withMessage("Image must be a string").escape(),
     body("title").optional().trim().isString().withMessage("Title must be a string").escape(),
     body("body").optional().trim().isString().withMessage("Body must be a string").escape(),
@@ -25,6 +26,7 @@ export const addNewPostValidator = [
 ];
 export const editPostValidator = [
     param("id").isMongoId().withMessage("Invalid post id").escape(),
+    body("publishedId").optional().isMongoId().withMessage("Invalid post id").escape(),
     body("image").optional().trim().isString().withMessage("Image must be a string").escape(),
     body("title").optional().trim().isString().withMessage("Title must be a string").escape(),
     body("body").optional().trim().isString().withMessage("Body must be a string").escape(),

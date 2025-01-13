@@ -19,6 +19,5 @@ export default module.exports = session({
     secure: process.env.NODE_ENV === "production", // Set to true in production
     sameSite: process.env.SAME_ORIGIN === "true" ? "strict" : "none", // Set to "strict" when same origin is true
     priority: "high",
-    path: "/"
   },
 });

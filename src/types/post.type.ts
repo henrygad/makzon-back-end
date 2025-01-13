@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 
 type postProps = {
-    _id:  mongoose.Schema.Types.ObjectId,
+    _id: mongoose.Schema.Types.ObjectId,
+    publishedId: mongoose.Schema.Types.ObjectId,
     image: string,
     author: string,
     title:  string,

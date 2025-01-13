@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import "dotenv/config";
 
-
 // Create db connection
 const connectDB = async (cb: () => void) => {
   try {

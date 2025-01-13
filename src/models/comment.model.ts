@@ -5,19 +5,28 @@ export interface IComment extends commentProps, Document<Schema.Types.ObjectId> 
 };
 
 const commentSchema = new Schema({
-    postId: { type: mongoose.Schema.Types.ObjectId, require: [true, "Please provide a comment id"] },
-    commentParentId: { type: mongoose.Schema.Types.ObjectId, ref: "comments", default: null },
+    postId: {
+        type: mongoose.Schema.Types.ObjectId,
+        require: [true, "Please provide a comment id"]
+    },
+    replyId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "comments",
+        default: null
+    },
     author: {
         type: String,
         require: [true, "Please provide an author username"],
     },
     body: { _html: String, text: String },
-    url: {
+    url_leading_to_comment_parent: {
         type: String,
         require: [true, "Please provide comment url"],
-        unique: [true, "There is a comment with this url"],
+    },    
+    replingTo: {
+        type: [String],
+        require: [true, "Please provide a reply to"]
     },
-    replingTo: [String],
     likes: [String],
 }, { timestamps: true });
 
