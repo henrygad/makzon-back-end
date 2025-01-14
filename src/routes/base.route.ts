@@ -18,7 +18,7 @@ router.get("/", (req: CustomRequest, res: Response) => {
     req.session.save();
   }
   res.status(200).json({
-    message: `Welcome ${req.session.visited ? "back" : "new"} user`,
+    message: "Welcome user",
     data: {
       session: req.session,
       sessionId: req.session.id,
