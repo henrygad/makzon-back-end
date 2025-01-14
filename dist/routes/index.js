@@ -1,0 +1,26 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.testRoutes = exports.draftRoutes = exports.searchRoutes = exports.notificationRoutes = exports.commentRoutes = exports.fileRoutes = exports.postRoutes = exports.userRoutes = exports.authRoutes = exports.baseRoute = void 0;
+const auth_route_1 = __importDefault(require("./auth.route"));
+exports.authRoutes = auth_route_1.default;
+const user_route_1 = __importDefault(require("./user.route"));
+exports.userRoutes = user_route_1.default;
+const post_route_1 = __importDefault(require("./post.route"));
+exports.postRoutes = post_route_1.default;
+const file_route_1 = __importDefault(require("./file.route"));
+exports.fileRoutes = file_route_1.default;
+const comment_route_1 = __importDefault(require("./comment.route"));
+exports.commentRoutes = comment_route_1.default;
+const notification_route_1 = __importDefault(require("./notification.route"));
+exports.notificationRoutes = notification_route_1.default;
+const search_route_1 = __importDefault(require("./search.route"));
+exports.searchRoutes = search_route_1.default;
+const draft_route_1 = __importDefault(require("./draft.route"));
+exports.draftRoutes = draft_route_1.default;
+const base_route_1 = __importDefault(require("./base.route"));
+exports.baseRoute = base_route_1.default;
+const test_route_1 = __importDefault(require("./test.route"));
+exports.testRoutes = test_route_1.default;
