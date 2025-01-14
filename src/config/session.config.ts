@@ -16,7 +16,8 @@ export default module.exports = session({
   cookie: {
     httpOnly: true, // Prevents client side JS from reading the cookie
     maxAge: (1000 * 60 * 60) * 24, // last for 1 day
-    secure: process.env.NODE_ENV === "production", // Set to true in production
+    secure: process.env.NODE_ENV === "production" ||
+      process.env.NODE_ENV === "local_production", // Set to true in production
     sameSite: process.env.SAME_ORIGIN === "true" ? "strict" : "none", // Set to "strict" when same origin is true
     priority: "high",
   },

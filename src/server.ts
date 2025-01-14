@@ -7,7 +7,7 @@ import https from "https";
 const PORT = process.env.PORT || 5000;
 
 connectDB(() => {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "local_production") {
     
     const options = {    
       key: fs.readFileSync("./src/assets/certs/localhost-key.pem"),
