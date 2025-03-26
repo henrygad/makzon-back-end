@@ -50,7 +50,7 @@ const UserSchema = new Schema(
     displayEmail: String,
     displayPhoneNumber: String,
     website: String,
-    profession: [String],
+    profession: String,
     country: String,
     sex: String,
     bio: {

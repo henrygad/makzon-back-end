@@ -28,7 +28,7 @@ route.get("/all", userValidatorQueries, getAllUsers);
 route.get("/:userName", userValidatorParam, getSingleUser);
 
 // Protected user routes
-route.get("/", isAuthenticated, getAuthUser);
+route.get("/status", isAuthenticated, getAuthUser);
 route.delete("/", isAuthenticated, deleteUserValidator, deleteAuthUser);
 route.post("/saves", isAuthenticated, savesUserValidator, editAuthUserSaves);
 router.post(
@@ -44,7 +44,7 @@ route.patch(
   upload.single("avatar"),
   editAuthUser
 );
-router.use(
+router.get(
   "/:userName/stream/followers",
   isAuthenticated,
   userValidatorParam,

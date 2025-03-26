@@ -107,6 +107,7 @@ export const login = async (
     };
 
     // Add current user session id to user.session array
+    user.sessionId = req.session.id;
     user.sessions.push(userSession);
     req.user = await user.save();
 

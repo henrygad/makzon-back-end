@@ -1,13 +1,14 @@
 import mongoose from "mongoose";
 
 type userProps = {
-  _id:  mongoose.Schema.Types.ObjectId;
+  _id: mongoose.Schema.Types.ObjectId;
   userName: string;
   email: string;
   password: string;
   googleId?: string;
   isValidPassword(password: string): Promise<boolean>;
   userVerified: boolean;
+  sessionId: string,
   sessions: {
     token: string,
     toExpire: number
@@ -26,7 +27,7 @@ type userProps = {
   displayEmail: string;
   displayPhoneNumber: string;
   website: string;
-  profession: string[];
+  profession: string;
   country: string;
   sex: string;
   bio: string;

@@ -17,14 +17,14 @@ connectDB(() => {
     https.createServer(options, app).listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(
-        `Server current running on domain name: ${process.env.DOMAIN_NAME}`
+        `Server current running on end point: ${process.env.DOMAIN_NAME}`
       );
     });
   } else {
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(
-        `Server current running on domain name: ${process.env.DOMAIN_NAME}`
+        `Server current running on end point: ${process.env.DOMAIN_NAME}`
       );
     });
   }

@@ -25,8 +25,9 @@
     "nodemon",
     "multer"
   ],
-  "repository": "github",
-  "author": "Henry Orji",
+  "type": "commonjs",
+  "repository": "https://github.com/henrygad/makzon-back-end.git",
+  "author": "Henry Lovaday <henrygad.orji@gmail.com>",
   "license": "MIT",
   "private": false,
   "dependencies": {

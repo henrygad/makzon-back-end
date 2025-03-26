@@ -9,7 +9,7 @@ const connectDB = async (cb: () => void) => {
     cb();
 
   } catch (error) {      
-    console.log(error);
+    console.log(error, "from connectDB");
     process.exit(1);
   }
 };

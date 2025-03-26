@@ -5,6 +5,7 @@ import userProps from "../types/user.type";
 import { SessionData } from "express-session";
 import { validationResult } from "express-validator";
 
+
 // Get all users controller
 export const getAllUsers = async (
   req: Request,
@@ -72,13 +73,13 @@ export const getAuthUser = async (
 ) => {
   try {
     const user = await Users.findById((req.user as IUser)._id).select(
-      "-password  -_id -googleId -isValidPassword -sessions -verificationToken -verificationTokenExpiringdate -forgetPassWordToken -forgetPassWordTokenExpiringdate -changeEmailVerificationToke -changeEmailVerificationTokenExpiringdate -requestChangeEmail -__v"
+      "-password -_id -googleId -isValidPassword -sessions -verificationToken -verificationTokenExpiringdate -forgetPassWordToken -forgetPassWordTokenExpiringdate -changeEmailVerificationToke -changeEmailVerificationTokenExpiringdate -requestChangeEmail -__v"
     );
     if (!user) createError({ statusCode: 404, message: "User not found" });
 
     res.status(200).json({
       success: true,
-      data: user,
+      data: { ...user, sessionId: req.session.id },
       message: "Auth User found successfully",
     });
   } catch (error) {
