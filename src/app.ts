@@ -21,7 +21,8 @@ const app = express();
 
 if (
   process.env.NODE_ENV === "production" ||
-  process.env.NODE_ENV === "local_production"
+  process.env.NODE_ENV === "local_production" ||
+  process.env.NODE_ENV === "deploy"
 ) {
   if (process.env.ON_PROXY === "true") {
     app.set("trust proxy", 1); // Trust first proxy when behind a reverse proxy (e.g. Third part domain)
