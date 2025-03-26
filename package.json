@@ -5,6 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "test": "node test.js",
+    "prebuild": "yarn install",
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "nodemon",
