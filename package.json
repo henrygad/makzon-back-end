@@ -52,7 +52,8 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
     "sanitize-html": "^2.14.0",
-    "xss-clean": "^0.1.4"
+    "xss-clean": "^0.1.4",
+    "@types/node": "^22.13.13"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
