@@ -20,6 +20,7 @@ import {
 } from "../validators/users.validator";
 import upload from "../config/uploadMedia.config";
 import router from "./auth.route";
+import { logout } from "../controllers/auth.controllers";
 
 const route = Router();
 
@@ -28,8 +29,8 @@ route.get("/all", userValidatorQueries, getAllUsers);
 route.get("/:userName", userValidatorParam, getSingleUser);
 
 // Protected user routes
-route.get("/status", isAuthenticated, getAuthUser);
-route.delete("/", isAuthenticated, deleteUserValidator, deleteAuthUser);
+route.get("/", isAuthenticated, getAuthUser);
+route.delete("/", isAuthenticated, deleteUserValidator, deleteAuthUser, logout);
 route.post("/saves", isAuthenticated, savesUserValidator, editAuthUserSaves);
 router.post(
   "/follow",

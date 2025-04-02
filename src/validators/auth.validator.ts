@@ -26,7 +26,7 @@ export const authValidator_register = [
         .escape()
 ];
 export const authValidator_login = [
-    body("userName")
+    body("identity")
         .trim()
         .escape(),
 

@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { register, logout, login, logoutRest} from "../controllers/auth.controllers";
-import passport from "../config/passport.config";
+import { localRegistretion, logout, localLogin, logoutRest, googleAuthRequest, googleLogin} from "../controllers/auth.controllers";
 import { isAuthenticated } from "../middlewares/auth.middleware";
 import {
   sendVerificationOTP,
@@ -25,32 +24,20 @@ import { changePassword, resetPassword, sendForgetPasswordOTP, verifyForgetPassw
 const router = Router();
 
 // Local authentication
-router.post("/register", authValidator_register, register);
-router.post(
-  "/login",
-  authValidator_login,
-  passport.authenticate("local"),
-  login
-);
+router.post("/register", authValidator_register, localRegistretion);
+router.post("/login", authValidator_login, localLogin);
 
 // Google authentication
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
-  login
-);
+router.get("/google", googleAuthRequest);
+router.get("/google/callback", googleLogin);
 
-// Verify user
-router.post("/verify", authValidator_varification_body, sendVerificationOTP);
-router.get("/verify", authValidator_varification_query, verifyUser);
+// Verify user account
+router.get("/opt/", isAuthenticated, sendVerificationOTP);
+router.get("/verify", authValidator_varification_query, isAuthenticated, verifyUser);
 
 // Reset or change password
-router.post("/password/forget", authValidator_varification_body, sendForgetPasswordOTP);
 router.get("/password/forget", authValidator_varification_query, verifyForgetPasswordOTP);
+router.post("/password/forget", authValidator_varification_body, sendForgetPasswordOTP);
 router.post("/password/reset", authValidator_resetPassword, resetPassword);
 router.post(
   "/password/change",
@@ -74,7 +61,7 @@ router.post(
 );
 
 // Logout
-router.get("/logout", logout); // current user
+router.get("/logout", isAuthenticated, logout); // current user
 router.get("/logout/rest", logoutRest); // rest of the users in this account
 
 

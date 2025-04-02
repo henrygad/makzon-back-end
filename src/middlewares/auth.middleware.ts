@@ -1,24 +1,26 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import createError from "../utils/error";
-import { IUser } from "../models/user.model";
+import { CustomRequest } from "../types/global";
 
 // Authenticate user middleware
 export const isAuthenticated = (
-  req: Request,
+  req: CustomRequest,
   _res: Response,
   next: NextFunction
 ) => {
   try {
 
-    if (
-      req.isAuthenticated() &&// Auth from server
-      (req.user as IUser).sessions.some(value => value.token === req.session.id && value.toExpire > Date.now()) // Auth from db
-    ) {
-      next();
+    if (req.session && req.session.id) {
+      if (req.session.user) {        
+        next();
+      } else {
+        createError({ statusCode: 401, message: "Unauthorized user" });
+      }
     } else {
-      createError({ statusCode: 401, message: "Unauthorized" });
+      createError({ statusCode: 401, message: "Session expired. Please you have to Re-login" });
     }
   } catch (error) {
     next(error);
   }
 };
+

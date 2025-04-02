@@ -12,11 +12,13 @@ export const security = (app: Application) => {
   app.use(helmet());
 
   // Enable CORS for the frontend
-  if (process.env.SAME_ORIGIN === "false") {
+  if (process.env.SAME_ORIGIN === "false" &&
+      process.env.DOMAIN_NAME_FRONTEND
+  ) {
     app.use(
       cors({
-        origin: [], // Allow requests from this origin
-        methods: [], // Allow specific HTTP methods
+        origin: [process.env.DOMAIN_NAME_FRONTEND], // Allow requests from this origin
+       // methods: [], // Allow specific HTTP methods 
         credentials: true, // Allow
       })
     );
@@ -44,6 +46,7 @@ export const security = (app: Application) => {
     max: 100, // Limit each IP to 100 requests per `windowMs`
     message: "Too many requests from this IP, please try again later.",
   }));
+  
 };
 
 // Enforce HTTPS
