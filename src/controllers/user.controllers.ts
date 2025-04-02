@@ -1,10 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import Users, { IUser } from "../models/user.model";
+import Users from "../models/user.model";
 import createError from "../utils/error";
 import userProps from "../types/user.type";
-import { SessionData } from "express-session";
 import { validationResult } from "express-validator";
-
+import { CustomRequest } from "../types/global";
 
 // Get all users controller
 export const getAllUsers = async (
@@ -13,10 +12,10 @@ export const getAllUsers = async (
   next: NextFunction
 ) => {
   try {
-
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty())
+      createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { skip = 0, limit = 0 } = req.query;
 
@@ -27,7 +26,8 @@ export const getAllUsers = async (
         "-password -_id -googleId -isValidPassword -sessions -verificationToken -verificationTokenExpiringdate -forgetPassWordToken -forgetPassWordTokenExpiringdate -changeEmailVerificationToke -changeEmailVerificationTokenExpiringdate -requestChangeEmail -__v"
       );
 
-    if (!users.length) createError({ statusCode: 404, message: "Users not found" });
+    if (!users.length)
+      createError({ statusCode: 404, message: "Users not found" });
 
     res.status(200).json({
       success: true,
@@ -45,11 +45,11 @@ export const getSingleUser = async (
   next: NextFunction
 ) => {
   try {
-
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
-    
+    if (!errors.isEmpty())
+      createError({ message: errors.array()[0].msg, statusCode: 422 });
+
     const { userName } = req.params;
     const user = await Users.findById({ userName }).select(
       "-password -_id -googleId -isValidPassword -sessions -verificationToken -verificationTokenExpiringdate -forgetPassWordToken -forgetPassWordTokenExpiringdate -changeEmailVerificationToke -changeEmailVerificationTokenExpiringdate -requestChangeEmail -__v"
@@ -65,21 +65,37 @@ export const getSingleUser = async (
     next(error);
   }
 };
+
 // Get authenticated user controller
 export const getAuthUser = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const user = await Users.findById((req.user as IUser)._id).select(
-      "-password -_id -googleId -isValidPassword -sessions -verificationToken -verificationTokenExpiringdate -forgetPassWordToken -forgetPassWordTokenExpiringdate -changeEmailVerificationToke -changeEmailVerificationTokenExpiringdate -requestChangeEmail -__v"
-    );
-    if (!user) createError({ statusCode: 404, message: "User not found" });
+    if (!req.session.user)
+      return createError({ statusCode: 401, message: "Unauthorized user" });
+    // Remove the following properties from the user object before sending it to the client
+    // "-password -_id -googleId -isValidPassword -sessions -verificationToken -verificationTokenExpiringdate -forgetPassWordToken -forgetPassWordTokenExpiringdate -changeEmailVerificationToke -changeEmailVerificationTokenExpiringdate -requestChangeEmail -__v"
+    const user = req.session.user.toObject(); // Convert Mongoose document to plain object
+    // Remove sensitive fields from the user object
+    delete user.password;
+    delete user._id;
+    delete user.googleId;
+    delete user.isValidPassword;
+    delete user.sessions;
+    delete user.verificationToken;
+    delete user.verificationTokenExpiringdate;
+    delete user.forgetPassWordToken;
+    delete user.forgetPassWordTokenExpiringdate;
+    delete user.changeEmailVerificationToke;
+    delete user.changeEmailVerificationTokenExpiringdate;
+    delete user.requestChangeEmail;
+    delete user.__v;
 
     res.status(200).json({
       success: true,
-      data: { ...user, sessionId: req.session.id },
+      data: { ...user },
       message: "Auth User found successfully",
     });
   } catch (error) {
@@ -88,15 +104,15 @@ export const getAuthUser = async (
 };
 // Edit and update authenticated user controller
 export const editAuthUser = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-   
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty())
+      createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const {
       name,
@@ -110,7 +126,10 @@ export const editAuthUser = async (
       sex,
       bio,
     }: userProps = req.body;
-    const user = req.user as IUser;
+    const user = req.session.user;
+
+    if (!user)
+      return createError({ message: "Unauthorized user", statusCode: 401 });
     const image = (req.file?.filename + "/" + req.file?.filename).trim();
 
     const updatedUser = await Users.findByIdAndUpdate(
@@ -131,6 +150,9 @@ export const editAuthUser = async (
       { new: true, runValidators: true }
     );
 
+    if (!updatedUser)
+      createError({ statusCode: 404, message: "User not found" });
+
     res.status(200).json({
       success: true,
       data: updatedUser,
@@ -142,27 +164,31 @@ export const editAuthUser = async (
 };
 // Edit authenticated user saves controller
 export const editAuthUserSaves = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty())
+      createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { save }: { save: string } = req.body;
-    const user = req.user as IUser;
 
-    user.saves.push(save);
-    req.user = await user.save();
+    if (req.session.user) {
+      const user = await Users.findById(req.session.user._id);
+      if (user) {
+        user.saves.push(save);
+        req.session.user = await user.save();
+      }
 
-    res.status(200).json({
-      success: true,
-      data: { save },
-      message: "User saves updated Successfully",
-    });
+      res.status(200).json({
+        success: true,
+        data: { save },
+        message: "User saves updated Successfully",
+      });
+    }
   } catch (error: unknown) {
     next(error);
   }
@@ -174,24 +200,28 @@ export const streamUserFollowers = async (
   next: NextFunction
 ) => {
   try {
-
     const { userName } = req.params;
 
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
     });
     res.flushHeaders(); // Flush the headers to establish SSE with client
 
     const pipeline = [
       { $match: { "fullDocument.userName": userName } },
-      { $match: { "operationType": { $in: ["insert", "update", "delete"] } } },
-      { $match: { "updateDescription.updatedFields.followers": { $exists: true } } },
+      { $match: { operationType: { $in: ["insert", "update", "delete"] } } },
+      {
+        $match: {
+          "updateDescription.updatedFields.followers": { $exists: true },
+        },
+      },
     ];
     const watchUser = Users.watch(pipeline); // Watch user followers
 
-    watchUser.on("change", (change) => { // Stream user followers
+    watchUser.on("change", (change) => {
+      // Stream user followers
       const eventType = change.operationType;
       const followers = change.updateDescription.updatedFields.followers;
 
@@ -206,35 +236,34 @@ export const streamUserFollowers = async (
       watchUser.close();
       res.end();
     });
-
   } catch (error) {
     next(error);
   }
 };
 // Edit authenticated user followings controller
 export const editAuthUserFollowings = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty())
+      createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { userName }: { userName: string } = req.body;
-    const user = req.user as IUser;
+    if (!req.session.user)
+      return createError({ message: "Unauthorized user", statusCode: 401 });
 
-    // Check if already followed user
-    const isFollowing = user.followings.includes(userName);
-
+    const isFollowing = req.session.user.followings.includes(userName);
+    // If already followed user
     if (isFollowing) {
-
-      // Remove follower
+      // Unfollow user
+      // Delete current username from friend
       const followedUser = await Users.findOneAndUpdate(
         { userName },
-        { $pull: { followers: user.userName } },
+        { $pull: { followers: req.session.user.userName } },
         { runValidators: true }
       );
       if (!followedUser)
@@ -242,18 +271,20 @@ export const editAuthUserFollowings = async (
           statusCode: 404,
           message: "User not found or User not unfollowed",
         });
-      
-      // Unfollow user
-      user.followings.filter((name) => name !== userName);
-      user.markModified("followings");
-      req.user = await user.save();
-      
-    } else {
 
-      // Add follower
+      // Remove friend username from user following
+      const user = await Users.findById(req.session.user._id);
+      if (user && followedUser) {
+        user.followings.filter((name) => name !== followedUser.userName);
+        user.markModified("followings");
+        req.session.user = await user.save();
+      }
+    } else {
+      // Follow user
+      // Add current username to friend followers
       const followedUser = await Users.findOneAndUpdate(
         { userName },
-        { $push: { followers: user.userName } },
+        { $push: { followers: req.session.user.userName } },
         { runValidators: true }
       );
       if (!followedUser)
@@ -261,12 +292,14 @@ export const editAuthUserFollowings = async (
           statusCode: 404,
           message: "User not found or User not followed",
         });
-      
-      // Follow user
-      user.followings.push(userName);
-      user.markModified("followings");
-      req.user = await user.save();
 
+      // Remove friend username from user following
+      const user = await Users.findById(req.session.user._id);
+      if (user) {
+        user.followings.push(userName);
+        user.markModified("followings");
+        req.session.user = await user.save();
+      }
     }
 
     res.status(200).json({
@@ -282,7 +315,7 @@ export const editAuthUserFollowings = async (
 };
 // Delete authenticated user controller
 export const deleteAuthUser = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -292,35 +325,20 @@ export const deleteAuthUser = async (
     const errors = validationResult(req);
     if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { password }: { password: string } = req.body;
-    const user = req.user as IUser;
-
+    const { password } = req.query as { password: string };
+    if (!req.session.user) return createError({message:"", statusCode: 401});    
     // Comfirm user password
-    const isMatch = user.isValidPassword(password);
+    const isMatch = req.session.user.isValidPassword(password);
     if (!isMatch) createError({ statusCode: 401, message: "Invalid password" });
 
     // Delete user
-    const deletedUser = await Users.findByIdAndDelete(user._id);
-    if (!deletedUser)
-      createError({ statusCode: 404, message: "User not found" });
+    const deletedUser = await Users.findByIdAndDelete(req.session.user._id);
+    if (!deletedUser) createError({ statusCode: 404, message: "User not found" });
+    req.session.user = undefined; // Clear session user property
 
-    // Logout user
-    req.logOut(() => {
-      req.user = undefined;
-
-      interface T extends SessionData {
-        passport: {
-          user?: string;
-        };
-      }
-
-      (req.session as unknown as T).passport = { user: undefined };
-      req.session.save(() => {
-        res.status(200).json({
-          success: true,
-          message: "User deleted successfully",
-        });
-      });
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
     });
   } catch (error) {
     next(error);

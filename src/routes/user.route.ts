@@ -28,7 +28,7 @@ route.get("/all", userValidatorQueries, getAllUsers);
 route.get("/:userName", userValidatorParam, getSingleUser);
 
 // Protected user routes
-route.get("/status", isAuthenticated, getAuthUser);
+route.get("/", isAuthenticated, getAuthUser);
 route.delete("/", isAuthenticated, deleteUserValidator, deleteAuthUser);
 route.post("/saves", isAuthenticated, savesUserValidator, editAuthUserSaves);
 router.post(

@@ -25,7 +25,7 @@ export const editUserValidator = [
     body("bio").optional().trim().isString().withMessage("Bio must be a string").escape(),
 ];
 export const deleteUserValidator = [
-    body("password")
+    query("password")
         .trim()
         .isString().withMessage("Password must be a string")
         .escape()

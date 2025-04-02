@@ -66,9 +66,9 @@ src/
 
    ```env
    PORT=3000
-   ON_PROXY=false
+   ON_PROXY=true
    SAME_ORIGIN=true
-   NODE_ENV=production
+   NODE_ENV=production | deploy
    GENERAL_SECRET=<your-general-secret>
    DOMAIN_NAME=<your-domain-name>
    GMAIL=<your-email>

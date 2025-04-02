@@ -1,5 +1,4 @@
 import express from "express";
-import passport from "passport";
 import session from "./config/session.config";
 import {
   authRoutes,
@@ -14,19 +13,19 @@ import {
 } from "./routes/index";
 import { security, enforceHTTPS } from "./middlewares/security.middleware";
 import errorHandler from "./middlewares/error.middleware";
-import "dotenv/config";
 import { notFound } from "./controllers/404.controller";
+import "dotenv/config";
 
 const app = express();
 
 if (
   process.env.NODE_ENV === "production" ||
-  process.env.NODE_ENV === "local_production" ||
-  process.env.NODE_ENV === "deploy"
+  process.env.NODE_ENV === "deploy" ||
+  process.env.NODE_ENV === "local_https"
 ) {
   if (process.env.ON_PROXY === "true") {
-    app.set("trust proxy", 1); // Trust first proxy when behind a reverse proxy (e.g. Third part domain)
-  }
+    app.set("trust proxy", 1); // Trust first proxy when behind a reverse proxy (e.g. A third part domain)
+  }  
 
   app.use(enforceHTTPS); // Enforce HTTPS
 }
@@ -37,8 +36,6 @@ app.use(express.urlencoded({ extended: true, limit: "l00mb" })); // Parse URL-en
 security(app); // Apply security middleware
 
 app.use(session); // Enable session support
-app.use(passport.initialize()); // Initialize Passport
-app.use(passport.session()); // Enable session support for Passport
 
 app.use("/api", baseRoute); // Base api
 app.use("/api/auth", authRoutes); // Auth routes

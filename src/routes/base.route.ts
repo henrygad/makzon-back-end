@@ -19,12 +19,11 @@ router.get("/", (req: CustomRequest, res: Response) => {
   }
   res.status(200).json({
     message: "Welcome user",
-    data: {
-      session: req.session,
-      sessionId: req.session.id,
-    },
+    sessionId: req.session.id,  
+    session: req.session.cookie, 
     success: true,
   });
+    
 });
 
 export default router;

@@ -2,13 +2,90 @@ import { Request, Response, NextFunction } from "express";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../config/email.config";
-import "dotenv/config";
-import Users, { IUser } from "../models/user.model";
-import { SessionData } from "express-session";
+import Users from "../models/user.model";
 import { validationResult } from "express-validator";
+import registrationProps, { loginProps } from "../types/auth.types";
+import { CustomRequest } from "../types/global";
+import axios from "axios";
 
-// Register new user
-export const register = async (
+// request google authentication
+export const googleAuthRequest = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Redirect user to google authentication page
+    const url = `https://accounts.google.com/o/oauth2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.GOOGLE_REDIRCT_URI}&response_type=code&scope=openid%20email%20profile`;
+    res.redirect(url);
+  } catch (error) {
+    next(error);
+  }
+};
+// google authentication return callback
+export const googleLogin = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { code } = req.query;
+    if (!code) res.redirect(process.env.DOMAIN_NAME_FRONTEND + "/login");
+
+    // Exchange code for Google Access Token
+    const { data } = await axios.post(
+      "https://oauth2.googleapis.com/token",
+      null,
+      {
+        params: {
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          redirect_uri: process.env.GOOGLE_REDIRCT_URI,
+          grant_type: "authorization_code",
+          code,
+        },
+      }
+    );
+
+    // Get user info
+    const {
+      data: googleUser,
+    }: { data: { given_name: string; email: string; sub: string } } =
+      await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: `Bearer ${data.access_token}` }, });
+
+    // check if goolge user already signup
+    let user = await Users.findOne({ email: googleUser.email });
+
+    if (!user) {
+      // create new user from user google data
+      user = new Users({
+        userName: googleUser.email.split("@")[0],
+        email: googleUser.email,
+        googleId: googleUser.sub,
+        userVerified: true,
+      });
+      await user.save();
+    }
+
+    // Add current user session id to user.session array
+    user.sessions.push({
+      token: req.session.id,
+      toExpire: new Date(req.session.cookie.expires!).getTime(),
+    });
+
+    // Save user session to db and attach user to Customrequest body
+    req.session.user = await user.save();
+    const loginUser = req.session.user;
+
+    res.redirect(
+      process.env.DOMAIN_NAME_FRONTEND + "/profile/" + loginUser.userName
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+// Local Register new user
+export const localRegistretion = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -16,13 +93,10 @@ export const register = async (
   try {
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty())
+      createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const {
-      userName,
-      email,
-      password,
-    }: { userName: string; email: string; password: string } = req.body;
+    const { userName, email, password }: registrationProps = req.body;
 
     // If user exist by either username or email then throw an error
     let user = await Users.findOne({ email });
@@ -51,12 +125,12 @@ export const register = async (
     const otp = OTP(4);
     const expireOn: number = Date.now() + 15 * 60 * 1000; // expires in 15 minutes
     const url =
-      process.env.DOMAIN_NAME +
-      `/api/auth/verify?email=${user?.email}&otp=${otp}`;
+      process.env.DOMAIN_NAME_FRONTEND +
+      `/verify/user?email=${user?.email}&otp=${otp}`;
     const result = await sendEmail({
-      emailTo: email,
+      emailTo: user?.email,
       subject: "Email Verification",
-      template: `Welcome ${user?.userName}. Your verification code is: ${otp}. or click this url ${url}`,
+      template: `<span style="display: block;">Welcome ${user?.userName}</span> <br/> <span style="display: block;">Your verification code is: <span style="font-weight: bold;" >${otp}</span></span>, or click <a href="${url}">Verify account</a>`,
     });
     if (!result.sent)
       createError({
@@ -76,43 +150,60 @@ export const register = async (
     };
 
     res.status(201).json({
-      message: `Welcome ${user.userName}, you've successfully created your account. Next step is to verify your account`,
+      message: `Welcome ${user.userName}, you've successfully created your account`,
       email: hideEmail(user.email),
-      verifyUrl: "/api/auth/verify",
+      login: "/api/auth/login",
     });
   } catch (error) {
     next(error);
   }
 };
-// Loign user
-export const login = async (
-  req: Request,
+// Local Loign user
+export const localLogin = async (
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const user = req.user as IUser;
+    // Validate user input
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    // Check if user was Authenticated
-    if (!user || !req.session.id)
-      createError({
+    const { identity, password }: loginProps = req.body;
+
+    // Check if user exist by username or email
+    const user = await Users.findOne({
+      $or: [{ userName: identity }, { email: identity }],
+    });
+    if (!user)
+      return createError({
         statusCode: 401,
-        message: "Authentication failed: Session not found",
+        message: "Username: Invalid credentials",
       });
 
-    // Create new session
-    const userSession = {
-      token: req.session.id,
-      toExpire: new Date(req.session.cookie.expires!).getTime(),
-    };
+    // Comapre incoming passwords with hashed password
+    const isMatch = await user.isValidPassword(password);
+    if (!isMatch)
+      return createError({
+        statusCode: 401,
+        message: "Password: Invalid credentials",
+      });
 
     // Add current user session id to user.session array
-    user.sessionId = req.session.id;
-    user.sessions.push(userSession);
-    req.user = await user.save();
+    user.sessions.push({
+      token: req.session.id,
+      toExpire: new Date(req.session.cookie.expires!).getTime(),
+    });
+
+    // Save user session to db and attach user to Customrequest body
+    req.session.user = await user.save();
+    const loginUser = req.session.user;
 
     res.status(200).json({
-      message: `Welcome back ${user.userName}, you've successfully login into your account`,
+      message: `Welcome back ${loginUser.userName}, you've successfully login into your account`,
+      userName: loginUser.userName,
+      email: loginUser.email,
     });
   } catch (error) {
     next(error);
@@ -120,64 +211,68 @@ export const login = async (
 };
 // Logout current user
 export const logout = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // Logout user from db
-    const user = req.user as IUser;
-    user.sessions = user.sessions.filter(
-      (session) => session.token !== req.session.id
-    );
-    req.user = await user.save();
-
-    req.logOut(async (err) => {
-      // Logout user from server
-      if (err) next(createError({ statusCode: 500, message: "Logout error" }));
-      interface T extends SessionData {
-        passport: {
-          user?: string;
-        };
-      }
-
-      req.user = undefined;
-      (req.session as unknown as T).passport = { user: undefined };
-      req.session.save((err) => {
-        if (err)
-          next(
-            createError({ statusCode: 500, message: "Failed to save session" })
-          );
+   
+    if (req.session.user) {
+      const user = await Users.findById(req.session.user._id);
+      if (user) {
+        // Delete session from user session array
+        user.sessions = user.sessions.filter(
+          (session) => session.token !== req.session.id
+        );
+        req.session.user = await user.save();
+        // destroy user object from Customrequest body but keep session
+        req.session.user = undefined;
 
         res.status(200).json({
           message: "You've successfully logout",
         });
-      });
-    });
+
+      } else {
+        createError({ statusCode: 401, message: "Unauthorized" });
+      }
+
+    } else {
+      createError({ statusCode: 401, message: "Unauthorized" });
+    }
+   
   } catch (error) {
     next(error);
   }
-};   
+};
 // Logout rest user expect current user
 export const logoutRest = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const user = req.user as IUser;
 
-    if (user) {
-      // Logout the rest users from db but keep current user
-      user.sessions = user.sessions.filter(
-        (session) => session.token === req.session.id
-      );
-      req.user = await user.save();
+    if (req.session.user) {
+      const user = await Users.findById(req.session.user._id);
+      if (user) {
+        // Delete other login user session from user session array
+        user.sessions = user.sessions.filter(
+          (session) => session.token == req.session.id
+        );
+        req.session.user = await user.save();
+
+        res.status(200).json({
+          message: "You've successfully logged out the rest users",
+        });
+
+      } else {
+        createError({ statusCode: 401, message: "Unauthorized" });
+      }
+
+    } else {
+      createError({ statusCode: 401, message: "Unauthorized" });
     }
-
-    res.status(200).json({
-      message: "You've successfully logged out the rest users",
-    });
+       
   } catch (error) {
     next(error);
   }
