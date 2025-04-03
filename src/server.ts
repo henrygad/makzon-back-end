@@ -10,8 +10,8 @@ connectDB(() => {
   if (process.env.NODE_ENV === "local_https") {
     
     const options = {
-      key: fs.readFileSync("./src/assets/certs/localhost-key.pem"),
-      cert: fs.readFileSync("./src/assets/certs/localhost-cert.pem"),
+      key: fs.readFileSync("../makzon-back/certs/localhost-key.pem"),
+      cert: fs.readFileSync("../makzon-back/certs/localhost-cert.pem"),
     };
 
     https.createServer(options, app).listen(PORT, () => {
@@ -30,3 +30,5 @@ connectDB(() => {
     });
   }
 });
+
+//"/makzon-back/certs/localhost-cert.pem"
