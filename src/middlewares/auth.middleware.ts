@@ -1,11 +1,10 @@
-import  { Response, NextFunction } from "express";
+import  { Response, Request, NextFunction } from "express";
 import createError from "../utils/error";
-import { CustomRequest } from "../types/global";
 import Users from "../models/user.model";
 
 // Authenticate user middleware
 export const isAuthenticated =  async(
-  req: CustomRequest,
+  req: Request,
   _res: Response,
   next: NextFunction
 ) => {

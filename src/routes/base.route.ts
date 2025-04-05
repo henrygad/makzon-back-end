@@ -1,9 +1,10 @@
-import { Router, Request, Response } from "express";
+import { Router, Response } from "express";
+import { CustomRequest } from "../types/global";
 
 const router = Router();
 
 // Base api route
-router.get("/", (req: Request, res: Response) => {
+router.get("/", (req: CustomRequest, res: Response) => {
   if (!req.session.visited) {
     // Modify session
     req.session.visited = true;
