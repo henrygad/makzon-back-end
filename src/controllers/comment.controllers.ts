@@ -1,7 +1,6 @@
 import commentProps from "../types/comment.type";
 import { NextFunction, Request, Response } from "express";
 import Comment from "../models/comment.model";
-import userProps from "../types/user.type";
 import createError from "../utils/error";
 import { decodeHtmlEntities } from "../utils/decode";
 import mongoose from "mongoose";
@@ -29,6 +28,7 @@ export const getComments = async (
         limit: number;
         updatedAt: string;
       };
+    
     const filterBytime = updatedAt === "1" ? 1 : -1;
     const fillterCommentBy = ({
       author,
@@ -124,7 +124,7 @@ export const addComment = async (
     if (!errors.isEmpty())
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const user = req.user as userProps;
+    const user = req.session.user!;
     const {
       postId,
       replyId = null,

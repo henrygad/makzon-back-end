@@ -1,7 +1,7 @@
 import authRoutes from "./auth.route";
 import userRoutes from "./user.route";
 import postRoutes from "./post.route";
-import fileRoutes from "./file.route";
+import mediaRoutes from "./media.route";
 import commentRoutes from "./comment.route";
 import notificationRoutes from "./notification.route";
 import searchRoutes from "./search.route";
@@ -15,7 +15,7 @@ export {
     authRoutes,
     userRoutes,
     postRoutes,
-    fileRoutes,
+    mediaRoutes,
     commentRoutes,
     notificationRoutes,
     searchRoutes,

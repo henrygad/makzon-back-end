@@ -1,10 +1,8 @@
 import multer from "multer";
 import path from "path";
-import acceptedFiles from "../utils/fileFromat";
-import createError from "../utils/error";
 
-// Config media storage
-const storage = multer.diskStorage({
+// Storage for local files
+export const fileStorage = multer.diskStorage({
   destination(_, file, callback) {
     let folderName = "";
     // RegEx for files types
@@ -49,21 +47,5 @@ const storage = multer.diskStorage({
   },
 });
 
-// Filter file and create new instanceof multer
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB max file size
-  },
-  fileFilter(_, file, callback) {
-    // Validate file
-    const fileExt = path.extname(file.originalname).toLocaleLowerCase();
-    const accepted_ext = acceptedFiles[fileExt as keyof typeof acceptedFiles]; // Validate the file extention
-    const accepted_mimeType = accepted_ext === file.mimetype; // Validate the file mime type
-    if (!accepted_mimeType) callback(createError({ statusCode: 415, message: "Unsupported file type" }), false);
-    
-    callback(null, true);
-  },
-});
-
-export default upload;
+// Memory storage 
+export const keepInMemoryStorage = multer.memoryStorage();

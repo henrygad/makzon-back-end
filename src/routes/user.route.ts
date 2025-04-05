@@ -18,7 +18,7 @@ import {
   savesUserValidator,
   followUserValidator,
 } from "../validators/users.validator";
-import upload from "../config/uploadMedia.config";
+import uploadMedia, { storeMediaToDB } from "../middlewares/uploadMedia.config";
 import router from "./auth.route";
 
 const route = Router();
@@ -29,26 +29,27 @@ route.get("/:userName", userValidatorParam, getSingleUser);
 
 // Protected user routes
 route.get("/", isAuthenticated, getAuthUser);
-route.delete("/", isAuthenticated, deleteUserValidator, deleteAuthUser);
-route.post("/saves", isAuthenticated, savesUserValidator, editAuthUserSaves);
+router.get(
+  "/:userName/stream/followers",
+  userValidatorParam,
+  isAuthenticated,
+  streamUserFollowers
+);
+route.post("/saves", savesUserValidator, isAuthenticated, editAuthUserSaves);
 router.post(
   "/follow",
-  isAuthenticated,
   followUserValidator,
+  isAuthenticated,
   editAuthUserFollowings
 );
 route.patch(
   "/",
-  isAuthenticated,
   editUserValidator,
-  upload.single("avatar"),
+  isAuthenticated,
+  uploadMedia.single("avatar"),
+  storeMediaToDB,
   editAuthUser
 );
-router.get(
-  "/:userName/stream/followers",
-  isAuthenticated,
-  userValidatorParam,
-  streamUserFollowers
-);
+route.delete("/", deleteUserValidator, isAuthenticated, deleteAuthUser);
 
 export default route;

@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
 import createError from "../utils/error";
-import userProps from "../types/user.type";
 import postProps from "../types/post.type";
 import Drafts from "../models/draft.model";
 import { decodeHtmlEntities } from "../utils/decode";
@@ -13,10 +12,10 @@ export const getDrafts = async (
   next: NextFunction
 ) => {
   try {
-    const { userName } = req.user as userProps;
+    const { userName } = req.session.user!;
 
     const drafts: postProps[] = await Drafts.find({ author: userName });
-    if (!drafts.length)
+    if (!drafts)
       createError({ message: "Draft not found", statusCode: 404 });
 
     res.status(200).json({
@@ -78,12 +77,14 @@ export const addDraft = async (
     if (!errors.isEmpty())
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const user = req.user as userProps;
+    const { userName } = req.session.user!;
+
     const image_from_multer = (
       req.file?.filename +
       "/" +
       req.file?.filename
     ).trim();
+
     const {
       publishedId,
       image,
@@ -104,7 +105,7 @@ export const addDraft = async (
       slug: filteredSlug,
       catigories,
       mentions,
-      author: user.userName,
+      author: userName,
       image: image_from_multer || image,
       status: "draft",
     });

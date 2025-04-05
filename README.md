@@ -102,7 +102,7 @@ src/
 | GET    | `/api/comment`           | Comment operations                 |
 | GET    | `/api/draft`             | Draft-related operations           |
 | GET    | `/api/notification`      | Notification operations            |
-| GET    | `/api/file`              | File handling operations           |
+| GET    | `/api/media`              | File handling operations           |
 | GET    | `/api/search`            | Search operations                  |
 | GET    | `/api/test`              | Testing routes                     |
 

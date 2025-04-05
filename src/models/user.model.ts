@@ -65,7 +65,8 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
-// On save doc
+// On save doc to db, hash the password and set the followings to timeline
+// and set the timeline to the followings
 UserSchema.pre<IUser>("save", async function (next) { 
   // Hash password
   if (this.isModified("password")) {
@@ -78,7 +79,16 @@ UserSchema.pre<IUser>("save", async function (next) {
   next();
 });
 
-// Func to compare password when called
+// A method to save user data on the fly (e.g. when the req.session.user object is updated, then this method will be called to update the user data in the database. (i.e req.sessions.user.save() ))
+UserSchema.methods.saveChange = async function () {
+  const user = await Users.findByIdAndUpdate(this._id, this, {
+    new: true,
+    runValidators: true,
+  });
+  return user as IUser;
+};
+
+// Method that compare password when called
 UserSchema.methods.isValidPassword = async function (password: string) {
   const isMatch = await bcrypt.compare(password, this.password);
   return isMatch;

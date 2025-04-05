@@ -1,21 +1,20 @@
-import { NextFunction, Response } from "express";
-import Users, { IUser } from "../models/user.model";
+import { NextFunction, Request, Response } from "express";
+import Users from "../models/user.model";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../config/email.config";
 import "dotenv/config";
 import hideEmail from "../utils/hideEmail";
 import { validationResult } from "express-validator";
-import { CustomRequest } from "../types/global";
 
 // Send verification otp
 export const sendVerificationOTP = async (
-    req: CustomRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ) => {
     try {
-        const user = req.session.user as IUser;
+        const user = req.session.user!;
 
         if (!user)
             return createError({ statusCode: 404, message: "User not found" });
@@ -57,7 +56,7 @@ export const sendVerificationOTP = async (
 };
 // Verify user
 export const verifyUser = async (
-    req: CustomRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ) => {
@@ -101,3 +100,4 @@ export const verifyUser = async (
         next(error);
     }
 };
+

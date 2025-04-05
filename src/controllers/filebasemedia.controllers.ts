@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import Files from "../models/file.model";
+import Files from "../models/media.model";
 import createError from "../utils/error";
 import path from "path";
 import acceptedFiles from "../utils/fileFromat";
@@ -18,7 +18,7 @@ export const sendFilesInfo = async (req: Request, res: Response, next: NextFunct
             files = await Files.find();
         };
 
-        if (!files.length) createError({ statusCode: 404, message: "No files found" });
+        if (!files) createError({ statusCode: 404, message: "No files found" });
 
         res.status(200).json({
             message: "Fetch successfully",
@@ -95,7 +95,7 @@ export const uploadFile = async (req: Request, res: Response, next: NextFunction
 // Delete file
 export const deleteFile = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        
+
         const { fieldname, filename } = req.params;
         const filePath = path.join(__dirname, "..", "assets", fieldname, filename);
 

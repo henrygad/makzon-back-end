@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import Users, { IUser } from "../models/user.model";
+import Users from "../models/user.model";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../config/email.config";
@@ -157,9 +157,8 @@ export const changePassword = async (
     // Validate user input
     const errors = validationResult(req);
     if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
-    const { oldPassword, newPassword }:
-      { oldPassword: string, newPassword: string } = req.body;
-    const user = (req.user as IUser);
+    const { oldPassword, newPassword }: { oldPassword: string, newPassword: string } = req.body;
+    const user = req.session.user!;
 
     // Check if old password is valid
     const isMatch = await user.isValidPassword(oldPassword);
@@ -177,7 +176,7 @@ export const changePassword = async (
     // Change user password
     user.password = newPassword;
     user.markModified("password");
-    req.user = await user.save();
+    req.session.user = user;
 
     res.status(200).json({
       message:

@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import Posts from "../models/post.model";
 import createError from "../utils/error";
 import postProps from "../types/post.type";
-import userProps from "../types/user.type";
 import { validationResult } from "express-validator";
 import { decodeHtmlEntities } from "../utils/decode";
 
@@ -20,7 +19,7 @@ export const getPosts = async (
 
     const {
       status = "published",
-      author = "",
+      author,
       catigory,
       updatedAt = "-1",
       skip = 0,
@@ -34,6 +33,7 @@ export const getPosts = async (
       limit: number;
     };
     const filterBytime = updatedAt === "1" ? 1 : -1;
+
     const fillterPostBy = ({
       status,
       author,
@@ -57,7 +57,7 @@ export const getPosts = async (
       .sort({ updatedAt: filterBytime })
       .skip(Number(skip))
       .limit(Number(limit));
-    if (!posts.length)
+    if (!posts)
       createError({ message: "Posts not found", statusCode: 404 });
 
     res.status(200).json({
@@ -93,7 +93,7 @@ export const getTrendingPosts = async (
       .sort({ views: -1 })
       .skip(Number(skip))
       .limit(Number(limit));
-    if (!posts.length)
+    if (!posts)
       createError({ message: "Posts not found", statusCode: 404 });
 
     res.status(200).json({
@@ -124,7 +124,7 @@ export const getTimelinePosts = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { skip = 0, limit = 0 } = req.query;
-    const { timeline, userName } = req.user as userProps;
+    const { timeline, userName } = req.session.user!;
 
     const posts: postProps[] = await Posts.find({
       author: { $in: [...timeline, userName] },
@@ -133,7 +133,7 @@ export const getTimelinePosts = async (
       .sort({ updatedAt: -1 })
       .skip(Number(skip))
       .limit(Number(limit));
-    if (!posts.length)
+    if (!posts)
       createError({ message: "Posts not found", statusCode: 404 });
 
     res.status(200).json({
@@ -158,7 +158,7 @@ export const streamTimelinePosts = async (
   next: NextFunction
 ) => {
   try {
-    const { timeline } = req.user as userProps;
+    const { timeline } = req.session.user!;
 
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -219,13 +219,14 @@ export const getSavePosts = async (
   next: NextFunction
 ) => {
   try {
+
     // Validate user input
     const errors = validationResult(req);
     if (!errors.isEmpty())
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { skip = 0, limit = 0 } = req.query;
-    const { saves } = req.user as userProps;
+    const { saves } = req.session.user!;
 
     const posts: postProps[] = await Posts.find({
       _id: { $in: saves },
@@ -234,7 +235,7 @@ export const getSavePosts = async (
       .sort({ updatedAt: -1 })
       .skip(Number(skip))
       .limit(Number(limit));
-    if (!posts.length)
+    if (!posts)
       createError({ message: "Posts not found", statusCode: 404 });
 
     res.status(200).json({
@@ -298,12 +299,9 @@ export const addPost = async (
     if (!errors.isEmpty())
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const user = req.user as userProps;
-    const image_from_multer = (
-      req.file?.filename +
-      "/" +
-      req.file?.filename
-    ).trim();
+    const { userName } = req.session.user!;
+
+    const image_from_multer = req.file?.filename;
     const { image, title, body, _html, slug, catigories, mentions }: postProps =
       req.body;
     const filteredSlug = slug.toLocaleLowerCase().replace(/\//g, "");
@@ -315,9 +313,9 @@ export const addPost = async (
       slug: filteredSlug,
       catigories,
       mentions,
-      author: user.userName,
+      author: userName,
       image: image_from_multer || image,
-      url: user.userName + "/" + filteredSlug,
+      url: userName + "/" + filteredSlug,
       status: "published",
     });
     post = await post.save();
@@ -351,11 +349,7 @@ export const editPost = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { id } = req.params;
-    const image_from_multer = (
-      req.file?.filename +
-      "/" +
-      req.file?.filename
-    ).trim();
+    const image_from_multer = req.file?.filename;
     const {
       image,
       title,

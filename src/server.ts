@@ -31,4 +31,3 @@ connectDB(() => {
   }
 });
 
-//"/makzon-back/certs/localhost-cert.pem"

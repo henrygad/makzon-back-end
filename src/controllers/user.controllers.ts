@@ -3,7 +3,6 @@ import Users from "../models/user.model";
 import createError from "../utils/error";
 import userProps from "../types/user.type";
 import { validationResult } from "express-validator";
-import { CustomRequest } from "../types/global";
 
 // Get all users controller
 export const getAllUsers = async (
@@ -26,7 +25,7 @@ export const getAllUsers = async (
         "-password -_id -googleId -isValidPassword -sessions -verificationToken -verificationTokenExpiringdate -forgetPassWordToken -forgetPassWordTokenExpiringdate -changeEmailVerificationToke -changeEmailVerificationTokenExpiringdate -requestChangeEmail -__v"
       );
 
-    if (!users.length)
+    if (!users)
       createError({ statusCode: 404, message: "Users not found" });
 
     res.status(200).json({
@@ -68,7 +67,7 @@ export const getSingleUser = async (
 
 // Get authenticated user controller
 export const getAuthUser = async (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -104,7 +103,7 @@ export const getAuthUser = async (
 };
 // Edit and update authenticated user controller
 export const editAuthUser = async (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -126,16 +125,13 @@ export const editAuthUser = async (
       sex,
       bio,
     }: userProps = req.body;
-    const user = req.session.user;
-
-    if (!user)
-      return createError({ message: "Unauthorized user", statusCode: 401 });
-    const image = (req.file?.filename + "/" + req.file?.filename).trim();
+    const user = req.session.user!; // Get the authenticated user from the session
+    const image_from_multer = req.file?.filename;
 
     const updatedUser = await Users.findByIdAndUpdate(
       user._id,
       {
-        avatar: image ? image : user.avatar,
+        avatar: image_from_multer || user.avatar,
         name,
         dateOfBirth,
         displayDateOfBirth,
@@ -149,6 +145,7 @@ export const editAuthUser = async (
       },
       { new: true, runValidators: true }
     );
+    req.session.user = await user.save(); // Update the session with the new user data
 
     if (!updatedUser)
       createError({ statusCode: 404, message: "User not found" });
@@ -164,7 +161,7 @@ export const editAuthUser = async (
 };
 // Edit authenticated user saves controller
 export const editAuthUserSaves = async (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -242,7 +239,7 @@ export const streamUserFollowers = async (
 };
 // Edit authenticated user followings controller
 export const editAuthUserFollowings = async (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -315,7 +312,7 @@ export const editAuthUserFollowings = async (
 };
 // Delete authenticated user controller
 export const deleteAuthUser = async (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {

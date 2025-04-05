@@ -48,7 +48,6 @@ export const security = (app: Application) => {
   }));
   
 };
-
 // Enforce HTTPS
 export const enforceHTTPS = (
   req: Request,

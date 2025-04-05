@@ -6,14 +6,6 @@ import { decodeHtmlEntities } from "../utils/decode";
 import postProps from "../types/post.type";
 import userProps from "../types/user.type";
 import { validationResult } from "express-validator";
-import { Session } from "express-session";
-
-interface CustomSession extends Session {
-  searchHistory?: { _id: string, search: string }[]
-}
-interface CustomRequest extends Request {
-  session: CustomSession;
-}
 
 // Search user and post controller
 export const search = async (
@@ -63,7 +55,7 @@ export const search = async (
       .select(
         "-password -_id -googleId -isValidPassword -sessions -verificationToken -verificationTokenExpiringdate -forgetPassWordToken -forgetPassWordTokenExpiringdate -changeEmailVerificationToke -changeEmailVerificationTokenExpiringdate -requestChangeEmail -__v"
       );
-    if (!posts.length && !users.length)
+    if (!posts && !users)
       createError({ statusCode: 404, message: "No search results found" });
 
     res.status(200).json({
@@ -86,26 +78,22 @@ export const search = async (
 };
 // Get search history
 export const getSearchHistoris = (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const { session } = req;
-  if (session.searchHistory && session.searchHistory.length) {
-    const { searchHistory } = session;
+  if (!session) return next(createError({ statusCode: 404, message: "No search history found" }));
+  res.status(200).json({
+    message: "Search history retrieved successfully",
+    data: session.searchHistory,
+    success: true,
+  });
 
-    res.status(200).json({
-      message: "Search history retrieved successfully",
-      data: searchHistory,
-      success: true,
-    });
-  } else {
-    next(createError({ statusCode: 404, message: "No search history found" }));
-  }
 };
 // Add new search history
 export const addSearchHistory = (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -137,35 +125,32 @@ export const addSearchHistory = (
 };
 // Delete search history
 export const deleteSearchHistory = (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    // Validate user input
-    const errors = validationResult(req);
-    if (!errors.isEmpty())
-      createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { id } = req.params;
-    const { searchHistory } = req.session;
+  // Validate user input
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return next(createError({ message: errors.array()[0].msg, statusCode: 422 }));
 
-    if (!searchHistory?.find((history) => history._id === id))
-      createError({
-        statusCode: 404,
-        message: "Search history item not found",
-      });
-    req.session.searchHistory = searchHistory?.filter(
-      (history) => history._id !== id
-    );
-    req.session.save();
+  const { id } = req.params;
+  const { searchHistory } = req.session;
 
-    res.status(200).json({
-      message: "Search history item deleted",
-      data: { _id: id },
-      success: true,
+  if (!searchHistory?.find((history) => history._id === id))
+    createError({
+      statusCode: 404,
+      message: "Search history item not found",
     });
-  } catch (error) {
-    next(error);
-  }
+
+  req.session.searchHistory = searchHistory?.filter(
+    (history) => history._id !== id
+  );
+  req.session.save();
+
+  res.status(200).json({
+    message: "Search history item deleted",
+    data: { _id: id },
+    success: true,
+  });
 };

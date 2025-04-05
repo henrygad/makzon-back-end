@@ -18,6 +18,7 @@ import {
   validatePostQueries,
 } from "../validators/post.validator";
 import { isAuthenticated } from "../middlewares/auth.middleware";
+import uploadMedia, { storeMediaToDB } from "../middlewares/uploadMedia.config";
 
 const router = Router();
 
@@ -27,8 +28,8 @@ router.get("/:id", validatePostParam, getPost);
 router.get("/treading", validatePostQueries, getTrendingPosts);
 
 // Protected post routes
-router.post("/", addPostValidator, isAuthenticated, addPost);
-router.patch("/:id", editPostValidator, isAuthenticated, editPost);
+router.post("/", addPostValidator, isAuthenticated, uploadMedia.single("post"), storeMediaToDB, addPost);
+router.patch("/:id", editPostValidator, isAuthenticated, uploadMedia.single("post"), storeMediaToDB, editPost);
 router.delete("/:id", validatePostParam, isAuthenticated, deletePost);                                                                                                                                                                                                                         
 router.get("/saves", validatePostQueries, isAuthenticated, getSavePosts);
 router.get("/timeline", validatePostQueries, isAuthenticated, getTimelinePosts);

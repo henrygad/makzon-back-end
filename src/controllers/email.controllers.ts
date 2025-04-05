@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import Users, { IUser } from "../models/user.model";
+import Users from "../models/user.model";
 import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../config/email.config";
@@ -19,7 +19,7 @@ export const sendChangeEmailOTP = async (
         if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
         const { newEmail }: { newEmail: string } = req.body;
-        const user = req.user as IUser;
+        const user = req.session.user!;
 
         // Check if the new email is the same as the current email
         let cannotUseEmail: boolean | null = user.email === newEmail;
@@ -53,12 +53,13 @@ export const sendChangeEmailOTP = async (
                 statusCode: 500,
                 message: "Failed to send verification email",
             });
+        
 
         // Store OTP to user data       
         user.changeEmailVerificationToken = otp;
         user.changeEmailVerificationTokenExpiringdate = expireOn;
         user.requestChangeEmail = newEmail;
-        req.user = await user.save();
+        req.session.user =  user;
 
         res.status(200).json({
             message:
@@ -83,7 +84,7 @@ export const changeEmail = async (
 
         const { newEmail, otp }:
             { newEmail: string, otp: string } = req.body;
-        const user = (req.user as IUser);
+        const user = req.session.user!;
 
         // Verify OTP token sent by user
         if (user.requestChangeEmail !== newEmail ||
@@ -100,7 +101,7 @@ export const changeEmail = async (
             user.changeEmailVerificationTokenExpiringdate = 0;
             user.requestChangeEmail = "";
             user.email = newEmail;
-            req.user = await user.save();
+            req.session.user = user;
         };
 
         res.status(200).json({
@@ -110,4 +111,3 @@ export const changeEmail = async (
         next(error);
     }
 };
-

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { IUser } from "../models/user.model";
 
 type userProps = {
   _id: mongoose.Schema.Types.ObjectId;
@@ -7,6 +8,7 @@ type userProps = {
   password: string;
   googleId?: string;
   isValidPassword(password: string): Promise<boolean>;
+  saveChange(): Promise<IUser>;
   userVerified: boolean;
   login: boolean,  
   sessions: {

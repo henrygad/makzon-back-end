@@ -5,7 +5,6 @@ import sendEmail from "../config/email.config";
 import Users from "../models/user.model";
 import { validationResult } from "express-validator";
 import registrationProps, { loginProps } from "../types/auth.types";
-import { CustomRequest } from "../types/global";
 import axios from "axios";
 
 // request google authentication
@@ -24,7 +23,7 @@ export const googleAuthRequest = async (
 };
 // google authentication return callback
 export const googleLogin = async (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -73,7 +72,7 @@ export const googleLogin = async (
       toExpire: new Date(req.session.cookie.expires!).getTime(),
     });
 
-    // Save user session to db and attach user to Customrequest body
+    // Save user session to db and attach user to request body
     req.session.user = await user.save();
     const loginUser = req.session.user;
 
@@ -160,7 +159,7 @@ export const localRegistretion = async (
 };
 // Local Loign user
 export const localLogin = async (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -196,7 +195,7 @@ export const localLogin = async (
       toExpire: new Date(req.session.cookie.expires!).getTime(),
     });
 
-    // Save user session to db and attach user to Customrequest body
+    // Save user session to db and attach user to request body
     req.session.user = await user.save();
     const loginUser = req.session.user;
 
@@ -211,7 +210,7 @@ export const localLogin = async (
 };
 // Logout current user
 export const logout = async (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -225,7 +224,7 @@ export const logout = async (
           (session) => session.token !== req.session.id
         );
         req.session.user = await user.save();
-        // destroy user object from Customrequest body but keep session
+        // destroy user object from request body but keep session
         req.session.user = undefined;
 
         res.status(200).json({
@@ -246,7 +245,7 @@ export const logout = async (
 };
 // Logout rest user expect current user
 export const logoutRest = async (
-  req: CustomRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {

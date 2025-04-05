@@ -1,24 +1,34 @@
-//import "express-session"; // Import express-session module
 import { IUser } from "../models/user.model";
 import { Request } from "express";
 import { Session } from "express-session"; // Import Session interface from express-session
+import "express-session";
+import { frontEndMediaProps } from "./media.type";
 
- interface CustomSession extends Session {
-    visited?: boolean; // Add any custom properties you need
-    user?: IUser; // Add user property to session
+declare module "express-session" {
+  interface SessionData {
+    user?: IUser,
+    searchHistory?: { _id: string, search: string }[],
+    visited?: boolean,
+  }
 }
 
-export interface CustomRequest extends Request { 
-    session: CustomSession; // Use the custom session interface 
-    user?: IUser; // Add user property to request
+interface CustomSession extends Session {
+  user?: IUser,
+  searchHistory?: { _id: string, search: string }[],
+  visited?: boolean,
 }
 
 declare global {
-    namespace Express {
-        interface Request {
-            session: CustomSession; // Use the custom session interface
-            user?: IUser; // Add user property to request
-        }
+  namespace Express {
+    interface Request {
+      media?: frontEndMediaProps[]; // Add media property to request
+      session: CustomSession; // Use the custom session interface      
     }
- }
+  }
+}
 
+
+export interface CustomRequest extends Request {
+  media?: frontEndMediaProps[]; 
+  session: CustomSession; // Use the custom session interface
+}

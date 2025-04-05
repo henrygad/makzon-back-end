@@ -1,6 +1,5 @@
 import notificationProps from "../types/notification.type";
 import Notifications from "../models/notification.model";
-import userProps from "../types/user.type";
 import { NextFunction, Request, Response } from "express";
 import createError from "../utils/error";
 import { decodeHtmlEntities } from "../utils/decode";
@@ -13,14 +12,12 @@ export const getAuthUserNotifications = async (
   next: NextFunction
 ) => {
   try {
-
-    const user = req.user as userProps;
+    const { userName } = req.session.user!;
 
     const notifications: notificationProps[] = await Notifications.find({
-      to: user.userName,
+      to: userName,
     });
-    if (!notifications)
-      createError({ message: "Notifications not found", statusCode: 404 });
+    if (!notifications) return createError({ message: "Notifications not found", statusCode: 404 });
 
     res.status(200).json({
       message: "Notifications fetched successfully",
@@ -36,60 +33,63 @@ export const getAuthUserNotifications = async (
 };
 // Stream notification controller
 export const streamAuthUserNotification = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => { 
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    
-      const user = req.user as userProps;
-      res.writeHead(200, {
-        "Content-Type": "text/event-stream",
-        "Connection": "keep-alive",
-        "Cache-Control": "no-cache"
-      });
-      res.flushHeaders();
+    const { userName } = req.session.user!;
 
-      const pipeline = [{ $match: { operationType: { $in: ["insert", "update", "delete"] } } }];
-      const watchNotifications = Notifications.watch(pipeline);
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      Connection: "keep-alive",
+      "Cache-Control": "no-cache",
+    });
+    res.flushHeaders();
 
-      watchNotifications.on("change", (change) => {
-          const eventType = change.operationType;
-          const notification = change.fullDocument as notificationProps;
-          if (eventType === "delete") {
-              // send notification id to client when notification is deleted
-              const _id = change.documentKey._id;
-              res.write(`data: ${JSON.stringify({ eventType, notification: { _id } })}\n\n`);
-          } else {
-              // send notification to client when post is inserted or updated
-              if (notification.to === user.userName) {
-                  res.write(
-                      `data: ${JSON.stringify({
-                          eventType,
-                          notification: {
-                              ...notification,
-                              message: decodeHtmlEntities(notification.message),
-                          },
-                      })}\n\n`
-                  );
-              }
-          }
-      });
-      
-      watchNotifications.on("error", (error) => { 
-          // listen for errors in notifications collection
-          res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
-      });
+    const pipeline = [
+      { $match: { operationType: { $in: ["insert", "update", "delete"] } } },
+    ];
+    const watchNotifications = Notifications.watch(pipeline);
 
-      req.on("end", () => { 
-          // End the stream when client closes connection
-          watchNotifications.close();
-          res.end();
-      });
-    
+    watchNotifications.on("change", (change) => {
+      const eventType = change.operationType;
+      const notification = change.fullDocument as notificationProps;
+      if (eventType === "delete") {
+        // send notification id to client when notification is deleted
+        const _id = change.documentKey._id;
+        res.write(
+          `data: ${JSON.stringify({ eventType, notification: { _id } })}\n\n`
+        );
+      } else {
+        // send notification to client when post is inserted or updated
+        if (notification.to === userName) {
+          res.write(
+            `data: ${JSON.stringify({
+              eventType,
+              notification: {
+                ...notification,
+                message: decodeHtmlEntities(notification.message),
+              },
+            })}\n\n`
+          );
+        }
+      }
+    });
+
+    watchNotifications.on("error", (error) => {
+      // listen for errors in notifications collection
+      res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    });
+
+    req.on("end", () => {
+      // End the stream when client closes connection
+      watchNotifications.close();
+      res.end();
+    });
   } catch (error) {
-      next(error);
-  }  
+    next(error);
+  }
 };
 // Add notification controller
 export const addNotification = async (
@@ -98,20 +98,19 @@ export const addNotification = async (
   next: NextFunction
 ) => {
   try {
-
     // Validate user input
     const errors = validationResult(req);
     if (!errors.isEmpty())
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const user = req.user as userProps;
-    const { type, to, message, url} = req.body as unknown as notificationProps;
+    const { userName } = req.session.user!;
+    const { type, to, message, url } = req.body as unknown as notificationProps;
 
     let notification = new Notifications({
       type,
       message,
       url,
-      from: user.userName,
+      from: userName,
       to,
       checked: false,
     });
@@ -138,7 +137,6 @@ export const checkNotification = async (
   next: NextFunction
 ) => {
   try {
-
     // Validate user input
     const errors = validationResult(req);
     if (!errors.isEmpty())
@@ -173,7 +171,6 @@ export const deleteNotification = async (
   next: NextFunction
 ) => {
   try {
-
     // Validate user input
     const errors = validationResult(req);
     if (!errors.isEmpty())
