@@ -7,6 +7,7 @@ import { NextFunction, Request, Response } from "express";
 import mediaProps from "../types/media.type";
 import Media from "../models/media.model";
 
+
 // Filter file and create new instanceof multer
 const uploadMedia = multer({
   storage: keepInMemoryStorage,
