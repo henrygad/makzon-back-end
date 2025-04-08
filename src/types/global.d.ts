@@ -21,7 +21,7 @@ interface CustomSession extends Session {
 declare global {
   namespace Express {
     interface Request {
-      media?: frontEndMediaProps[]; // Add media property to request
+      media?: frontEndMediaProps | frontEndMediaProps[]; // Add media property to request
       session: CustomSession; // Use the custom session interface      
     }
   }
@@ -29,6 +29,6 @@ declare global {
 
 
 export interface CustomRequest extends Request {
-  media?: frontEndMediaProps[]; 
+  media?: frontEndMediaProps | frontEndMediaProps[]; 
   session: CustomSession; // Use the custom session interface
 }

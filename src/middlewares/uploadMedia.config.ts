@@ -42,53 +42,71 @@ export const storeMediaToDB = async (
 
     if (req.file) {
       const file: Express.Multer.File = req.file;
-      getRawFile = [
-        {
-          uploader: user.userName,
-          filename: file.filename,
-          originalname: file.originalname,
-          fieldname: file.fieldname,
-          mimetype: file.mimetype,
-          size: file.size,
-          data: file.buffer,
-          encoding: file.encoding,
-          destination: "",
-          path: "",
-        },
-      ];
+      getRawFile = {
+        uploader: user.userName,
+        filename: file.filename,
+        originalname: file.originalname,
+        fieldname: file.fieldname,
+        mimetype: file.mimetype,
+        size: file.size,
+        data: file.buffer,
+        encoding: file.encoding,
+        destination: "",
+        path: "",
+      };
+
+      // save file to db
+      const singleMedia = await Media.create(getRawFile);
+      if (!singleMedia) return createError({ statusCode: 500, message: "File not saved" });
+
+      req.media = {
+        _id: singleMedia._id,
+        filename: singleMedia.filename,
+        fieldname: singleMedia.fieldname,
+        mimetype: singleMedia.mimetype,
+        size: singleMedia.size,
+      };
+
     } else {
       if (req.files && Array.isArray(req.files) && req.files.length) {
-        getRawFile = req.files.map((file: Express.Multer.File) => ({
-          uploader: user.userName,
-          filename: file.filename,
-          originalname: file.originalname,
-          fieldname: file.fieldname,
-          mimetype: file.mimetype,
-          size: file.size,
-          data: file.buffer,
-          encoding: file.encoding,
-          destination: "",
-          path: "",
-        }));
+
+        getRawFile = req.files
+          .map((file: Express.Multer.File) => ({
+            uploader: user.userName,
+            filename: file.filename,
+            originalname: file.originalname,
+            fieldname: file.fieldname,
+            mimetype: file.mimetype,
+            size: file.size,
+            data: file.buffer,
+            encoding: file.encoding,
+            destination: "",
+            path: "",
+          }));
+
+        // save file to db
+        const multipleMedia = await Media.create(getRawFile);
+        if (!multipleMedia) return createError({ statusCode: 500, message: "File not saved" });        
+
+        req.media = multipleMedia.map((media) => (
+          {
+            _id: media._id,
+            filename: media.filename,
+            fieldname: media.fieldname,
+            mimetype: media.mimetype,
+            size: media.size,
+          }
+        ));
+       
+
       } else {
         req.media = undefined;
-        return next(req.media);
+       
       }
     }
 
-    // save file to db
-    const media = await Media.create(...getRawFile);
-    if (!media)
-      return createError({ statusCode: 500, message: "File not saved" });
-
-    req.media = media.map((file) => ({
-      _id: file._id,
-      filename: file.filename,
-      fieldname: file.fieldname,
-      mimetype: file.mimetype,
-      size: file.size,
-    }));
-    next(req.media);
+    next();
+   
   } catch (error) {
     next(error);
   }

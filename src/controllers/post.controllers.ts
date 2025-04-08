@@ -219,7 +219,6 @@ export const getSavePosts = async (
   next: NextFunction
 ) => {
   try {
-
     // Validate user input
     const errors = validationResult(req);
     if (!errors.isEmpty())
@@ -228,6 +227,8 @@ export const getSavePosts = async (
     const { skip = 0, limit = 0 } = req.query;
     const { saves } = req.session.user!;
 
+    if (!saves.length) createError({ message: "No saves yet", statusCode: 404 });
+    
     const posts: postProps[] = await Posts.find({
       _id: { $in: saves },
       status: "published",

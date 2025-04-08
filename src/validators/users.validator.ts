@@ -13,16 +13,17 @@ export const editUserValidator = [
     body("name").optional().isObject().withMessage("Name must be an object"),
     body("name.familyName").optional().trim().isString().withMessage("Family name Field must be a string").escape(),
     body("name.givenName").optional().trim().isString().withMessage("Given name must be a string").escape(),
-    body("dateOfBirth").optional().trim().isDate().withMessage("Date of birth must be a valid date").escape(),
+    body("avatar").optional().isString().withMessage("Avaer must be a string"),
+    body("dateOfBirth").optional().trim().isString().withMessage("Date of birth must be a string").escape(),
     body("displayDateOfBirth").optional().trim().isBoolean().withMessage("Field must be a boolean"),
     body("displayEmail").optional().trim().isEmail().withMessage("Email must be a valid email address").escape(),
-    body("displayPhoneNumber").optional().trim().isMobilePhone("any").withMessage("Phone number must be a valid phone number").escape(),
+    body("displayPhoneNumber").optional().trim().isString().withMessage("Phone number must be a string").escape(),
+    //body("displayPhoneNumber").optional().trim().isMobilePhone("any").withMessage("Phone number must be a valid phone number").escape(),
     body("website").optional().trim().isString().withMessage("displayDateOfBirth must be a string").escape(),
-    body("profession").optional().isArray().withMessage("Profession must be an array"),
-    body("profession.*").isString().withMessage("Each items must be a string").escape(),
+    body("profession").optional().isString().withMessage("Profession must be a string"), 
     body("country").optional().trim().isString().withMessage("Country must be a string").escape(),
     body("sex").optional().trim().isString().withMessage("Sex must be a string").escape(),
-    body("bio").optional().trim().isString().withMessage("Bio must be a string").escape(),
+    body("bio").optional().trim().isString().withMessage("Bio must be a string")
 ];
 export const deleteUserValidator = [
     query("password")

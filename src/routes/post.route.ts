@@ -28,11 +28,11 @@ router.get("/:id", validatePostParam, getPost);
 router.get("/treading", validatePostQueries, getTrendingPosts);
 
 // Protected post routes
+router.get("/user/saves", validatePostQueries, isAuthenticated, getSavePosts);
+router.get("/user/timeline", validatePostQueries, isAuthenticated, getTimelinePosts);
+router.get("/user/stream/timeline", isAuthenticated, streamTimelinePosts);
 router.post("/", addPostValidator, isAuthenticated, uploadMedia.single("post"), storeMediaToDB, addPost);
 router.patch("/:id", editPostValidator, isAuthenticated, uploadMedia.single("post"), storeMediaToDB, editPost);
 router.delete("/:id", validatePostParam, isAuthenticated, deletePost);                                                                                                                                                                                                                         
-router.get("/saves", validatePostQueries, isAuthenticated, getSavePosts);
-router.get("/timeline", validatePostQueries, isAuthenticated, getTimelinePosts);
-router.get("/timeline/stream", isAuthenticated, streamTimelinePosts);
 
 export default router;

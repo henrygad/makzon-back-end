@@ -12,7 +12,7 @@ router.get("/:filename", fileValidate_param, getSingleMedia);
 // Private routes
 router.get("/", isAuthenticated, getUserMedia);
 router.delete("/:filename", fileValidate_param, isAuthenticated, deleteMedia);
-router.post("/image",  uploadMedia.array("images", 10), storeMediaToDB, sendMedia); // Images
+router.post("/image", isAuthenticated,  uploadMedia.single("images"), storeMediaToDB, sendMedia); // Images
 router.post("/video", isAuthenticated, uploadMedia.single("videos"), storeMediaToDB, sendMedia); // Vidoes
 router.post("/audio", isAuthenticated, uploadMedia.single("audios"), storeMediaToDB, sendMedia); // Audio
 router.post("/doc", isAuthenticated, uploadMedia.single("docs"), storeMediaToDB, sendMedia); // Docs

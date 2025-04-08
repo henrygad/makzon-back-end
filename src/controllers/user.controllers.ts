@@ -115,6 +115,7 @@ export const editAuthUser = async (
 
     const {
       name,
+      avatar,
       dateOfBirth,
       displayDateOfBirth,
       displayEmail,
@@ -131,7 +132,7 @@ export const editAuthUser = async (
     const updatedUser = await Users.findByIdAndUpdate(
       user._id,
       {
-        avatar: image_from_multer || user.avatar,
+        avatar: image_from_multer || avatar,
         name,
         dateOfBirth,
         displayDateOfBirth,
@@ -145,10 +146,9 @@ export const editAuthUser = async (
       },
       { new: true, runValidators: true }
     );
-    req.session.user = await user.save(); // Update the session with the new user data
 
-    if (!updatedUser)
-      createError({ statusCode: 404, message: "User not found" });
+    if (!updatedUser) return createError({ statusCode: 404, message: "User not found" });
+    req.session.user = updatedUser; // Update the session with the new user data
 
     res.status(200).json({
       success: true,
@@ -323,7 +323,7 @@ export const deleteAuthUser = async (
     if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { password } = req.query as { password: string };
-    if (!req.session.user) return createError({message:"", statusCode: 401});    
+    if (!req.session.user) return createError({ message: "", statusCode: 401 });
     // Comfirm user password
     const isMatch = req.session.user.isValidPassword(password);
     if (!isMatch) createError({ statusCode: 401, message: "Invalid password" });

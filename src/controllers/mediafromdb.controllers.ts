@@ -42,15 +42,18 @@ export const getSingleMedia = async (
     if (!media)
       return createError({ statusCode: 404, message: "File not found" });
 
-    res.setHeader(
-      "Content-Disposition",
-      `inline; filename=${media.originalname}`
-    ); // Set content disposition
-    res.setHeader("Content-Length", media.size.toString()); // Set content length
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
-    res.setHeader("Pragma", "no-cache"); // HTTP 1.0
-    res.contentType(media.mimetype); // Set content type based on file type
-    res.send(media.data); // Send the file buffer as response
+    res.setHeader("Access-Control-Allow-Origin", process.env.DOMAIN_NAME_FRONTEND!);
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"); // crucial for loading cor images
+    res.setHeader("Content-Disposition", `inline; filename="${media.originalname}"`);
+    res.setHeader("Content-Length", media.size.toString());
+    res.setHeader("Cache-Control", "public, max-age=86400, immutable");
+    res.setHeader("Pragma", "no-cache");
+
+    res.contentType(media.mimetype); // e.g. image/png, image/jpeg
+    res.send(media.data); // send the Buffer
+
   } catch (error) {
     next(error);
   }
