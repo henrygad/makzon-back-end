@@ -5,7 +5,11 @@ export interface IDraft extends postProps, Document<Schema.Types.ObjectId> {
 };
 
 const DraftSchema = new Schema({
-    publishedId: mongoose.Schema.Types.ObjectId,
+    publishedId: {
+        type: mongoose.Schema.Types.ObjectId || undefined,
+        default: undefined
+        
+    },
     image: String,
     author: {
         type: String,

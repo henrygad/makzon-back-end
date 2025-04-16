@@ -31,6 +31,15 @@ const PostSchema = new Schema({
     status: String,
 }, { timestamps: true });
 
+
+PostSchema.set("toJSON", {
+    versionKey: false,
+    transform: (_, ret) => {
+        delete ret.__v;
+        return ret;
+    },
+});
+
 const Posts: Model<IPost> = mongoose.models.posts ||
     mongoose.model<IPost>("posts", PostSchema);
 

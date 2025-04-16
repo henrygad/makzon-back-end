@@ -32,5 +32,6 @@ export interface frontEndMediaProps {
     fieldname: string;
     mimetype: string;
     size: number;
+    uploader: string
 }
 export default mediaProps;

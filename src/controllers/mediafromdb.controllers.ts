@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import Media from "../models/media.model";
 import createError from "../utils/error";
 import { validationResult } from "express-validator";
+import { frontEndMediaProps } from "../types/media.type";
 
 // get user media filenames from db
 export const getUserMedia = async (
@@ -15,10 +16,19 @@ export const getUserMedia = async (
     if (!media)
       return createError({ statusCode: 404, message: "No files found" });
 
+    const sendMediaNeccData: frontEndMediaProps[] = media.map((file) => ({
+      _id: file._id,
+      filename: file.filename,
+      fieldname: file.fieldname,
+      mimetype: file.mimetype,
+      size: file.size,
+      uploader: file.uploader,
+    }));
+
     res.status(200).json({
       message: "Successfully fetched files",
       success: true,
-      data: media,
+      data: sendMediaNeccData,
     });
   } catch (error) {
     next(error);
@@ -42,18 +52,23 @@ export const getSingleMedia = async (
     if (!media)
       return createError({ statusCode: 404, message: "File not found" });
 
-    res.setHeader("Access-Control-Allow-Origin", process.env.DOMAIN_NAME_FRONTEND!);
+    res.setHeader(
+      "Access-Control-Allow-Origin",
+      process.env.DOMAIN_NAME_FRONTEND!
+    );
     res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"); // crucial for loading cor images
-    res.setHeader("Content-Disposition", `inline; filename="${media.originalname}"`);
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${media.originalname}"`
+    );
     res.setHeader("Content-Length", media.size.toString());
     res.setHeader("Cache-Control", "public, max-age=86400, immutable");
     res.setHeader("Pragma", "no-cache");
 
     res.contentType(media.mimetype); // e.g. image/png, image/jpeg
     res.send(media.data); // send the Buffer
-
   } catch (error) {
     next(error);
   }
@@ -65,7 +80,8 @@ export const sendMedia = async (
   next: NextFunction
 ) => {
   try {
-    if(!req.media) return createError({ statusCode: 400, message: "No file uploaded" });
+    if (!req.media)
+      return createError({ statusCode: 400, message: "No file uploaded" });
 
     res.status(201).json({
       message: "Successfully uploaded file",

@@ -5,7 +5,7 @@ type postProps = {
     publishedId: mongoose.Schema.Types.ObjectId,
     image: string,
     author: string,
-    title:  string,
+    title: string,
     body: string,
     _html: { title: string, body: string },
     catigories: string[],
@@ -14,10 +14,11 @@ type postProps = {
     url: string,
     likes: string[],
     views: string[],
-    shares: string[],
+    shares: string[],    
     status: string,
     updatedAt: Date,
     createdAt: Date,
 };
+
 
 export default postProps;

@@ -5,7 +5,7 @@ import createError from "../utils/error";
 import { keepInMemoryStorage } from "../config/mediastorage.config";
 import { NextFunction, Request, Response } from "express";
 import mediaProps from "../types/media.type";
-import Media from "../models/media.model";
+import Media, { IMedia } from "../models/media.model";
 
 
 // Filter file and create new instanceof multer
@@ -25,7 +25,7 @@ const uploadMedia = multer({
         false
       );
     }
-    file.filename = Date.now() + "-" + file.originalname;
+    file.filename = Date.now() + "-" + file.originalname.replace(/ /g, "-");
     callback(null, true);
   },
 });
@@ -38,11 +38,12 @@ export const storeMediaToDB = async (
 ) => {
   try {
     const user = req.session.user!;
-    let getRawFile: mediaProps | mediaProps[];
+    let getRawFile: mediaProps[] = [];
 
     if (req.file) {
+      // A single file was uploaded
       const file: Express.Multer.File = req.file;
-      getRawFile = {
+      getRawFile = [{
         uploader: user.userName,
         filename: file.filename,
         originalname: file.originalname,
@@ -53,60 +54,58 @@ export const storeMediaToDB = async (
         encoding: file.encoding,
         destination: "",
         path: "",
-      };
+      }];
 
-      // save file to db
-      const singleMedia = await Media.create(getRawFile);
-      if (!singleMedia) return createError({ statusCode: 500, message: "File not saved" });
-
-      req.media = {
-        _id: singleMedia._id,
-        filename: singleMedia.filename,
-        fieldname: singleMedia.fieldname,
-        mimetype: singleMedia.mimetype,
-        size: singleMedia.size,
-      };
+    } else if (req.files && Array.isArray(req.files) && req.files.length) {
+      // Multiple files was uploaded
+      getRawFile = req.files
+        .map((file: Express.Multer.File) => ({
+          uploader: user.userName,
+          filename: file.filename,
+          originalname: file.originalname,
+          fieldname: file.fieldname,
+          mimetype: file.mimetype,
+          size: file.size,
+          data: file.buffer,
+          encoding: file.encoding,
+          destination: "",
+          path: "",
+        }));
 
     } else {
-      if (req.files && Array.isArray(req.files) && req.files.length) {
+      // No file was uploaded
+      req.media = undefined;
+      return next(); // Continue to the next middleware
+    }
 
-        getRawFile = req.files
-          .map((file: Express.Multer.File) => ({
-            uploader: user.userName,
-            filename: file.filename,
-            originalname: file.originalname,
-            fieldname: file.fieldname,
-            mimetype: file.mimetype,
-            size: file.size,
-            data: file.buffer,
-            encoding: file.encoding,
-            destination: "",
-            path: "",
-          }));
+    // Save file to db
+    const multipleMedia = await Media.create(...getRawFile);
+    if (!multipleMedia) return createError({ statusCode: 500, message: "File not saved" });
 
-        // save file to db
-        const multipleMedia = await Media.create(getRawFile);
-        if (!multipleMedia) return createError({ statusCode: 500, message: "File not saved" });        
-
-        req.media = multipleMedia.map((media) => (
-          {
-            _id: media._id,
-            filename: media.filename,
-            fieldname: media.fieldname,
-            mimetype: media.mimetype,
-            size: media.size,
-          }
-        ));
-       
-
-      } else {
-        req.media = undefined;
-       
-      }
+    if (Array.isArray(multipleMedia)) {
+      req.media = multipleMedia.map((media) => (
+        {
+          _id: media._id,
+          filename: media.filename,
+          fieldname: media.fieldname,
+          mimetype: media.mimetype,
+          size: media.size,
+          uploader: media.uploader
+        }
+      ));
+    } else {
+      const media = multipleMedia as IMedia;
+      req.media = {
+        _id: media._id,
+        filename: media.filename,
+        fieldname: media.fieldname,
+        mimetype: media.mimetype,
+        size: media.size,
+        uploader: media.uploader
+      };
     }
 
     next();
-   
   } catch (error) {
     next(error);
   }

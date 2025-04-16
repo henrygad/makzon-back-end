@@ -18,7 +18,7 @@ export const getPosts = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const {
-      status = "published",
+      status,
       author,
       catigory,
       updatedAt = "-1",
@@ -27,7 +27,7 @@ export const getPosts = async (
     } = req.query as unknown as {
       status: string;
       author: string;
-      catigory: string,
+      catigory: string;
       updatedAt: string;
       skip: number;
       limit: number;
@@ -41,34 +41,71 @@ export const getPosts = async (
       status: string;
       author: string;
     }) => {
-      if (status && author && catigory) return { status, author, catigories: { $in: [catigory] } };
+      if (status && author && catigory)
+        return { status, author, catigories: { $in: [catigory] } };
       else if (status && author) return { status, author };
-      else if (status && catigory) return { status, catigories: { $in: [catigory] } };
-      else if (author && catigory) return { author, catigories: { $in: [catigory] } };
+      else if (status && catigory)
+        return { status, catigories: { $in: [catigory] } };
+      else if (author && catigory)
+        return { author, catigories: { $in: [catigory] } };
       else if (author) return { author, catigories: { $in: [catigory] } };
       else if (status) return { status, catigories: { $in: [catigory] } };
       else if (catigory) return { author, catigories: { $in: [catigory] } };
       else return {};
     };
 
-    const posts: postProps[] = await Posts.find(
+    const posts = await Posts.find(
       fillterPostBy({ status, author })
     )
       .sort({ updatedAt: filterBytime })
       .skip(Number(skip))
       .limit(Number(limit));
-    if (!posts)
-      createError({ message: "Posts not found", statusCode: 404 });
+    if (!posts) createError({ message: "Posts not found", statusCode: 404 });
+    const getPosts = posts.map(post => post.toObject());
+
+    res.status(200).send({
+      data: getPosts
+        .map((post) => ({
+          ...post,
+          _html: {
+            title: decodeHtmlEntities(post._html.title),
+            body: decodeHtmlEntities(post._html.body),
+          },
+        })),
+      message: "Posts fetched successfully",
+      success: true,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+// Get single post controller
+export const getPost = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Validate user input
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      createError({ message: errors.array()[0].msg, statusCode: 422 });
+
+    const { author, slug } = req.params;
+  
+    const post = await Posts.findOne({author, slug});
+    if (!post) return createError({ message: "Post not found", statusCode: 404 });    
+    const getPost = post.toObject();    
 
     res.status(200).json({
-      data: posts.map((post) => ({
-        ...post,
+      data: {
+        ...getPost,
         _html: {
-          title: decodeHtmlEntities(post._html.title),
-          body: decodeHtmlEntities(post._html.body),
+          title: decodeHtmlEntities(getPost._html.title),
+          body: decodeHtmlEntities(getPost._html.body),
         },
-      })),
-      message: "Posts fetched successfully",
+      },
+      message: "Post fetched successfully",
       success: true,
     });
   } catch (error) {
@@ -89,15 +126,15 @@ export const getTrendingPosts = async (
 
     const { skip = 0, limit = 0 } = req.query;
 
-    const posts: postProps[] = await Posts.find({ status: "published" })
+    const posts = await Posts.find({ status: "published" })
       .sort({ views: -1 })
       .skip(Number(skip))
       .limit(Number(limit));
-    if (!posts)
-      createError({ message: "Posts not found", statusCode: 404 });
+    if (!posts) return createError({ message: "Posts not found", statusCode: 404 });
+    const getPosts = posts.map(post => post.toObject());
 
     res.status(200).json({
-      data: posts.map((post) => ({
+      data: getPosts.map((post) => ({
         ...post,
         _html: {
           title: decodeHtmlEntities(post._html.title),
@@ -126,18 +163,18 @@ export const getTimelinePosts = async (
     const { skip = 0, limit = 0 } = req.query;
     const { timeline, userName } = req.session.user!;
 
-    const posts: postProps[] = await Posts.find({
+    const posts = await Posts.find({
       author: { $in: [...timeline, userName] },
       status: "published",
     })
       .sort({ updatedAt: -1 })
       .skip(Number(skip))
       .limit(Number(limit));
-    if (!posts)
-      createError({ message: "Posts not found", statusCode: 404 });
+    if (!posts) createError({ message: "Posts not found", statusCode: 404 });
+    const getPosts = posts.map(post => post.toObject());
 
     res.status(200).json({
-      data: posts.map((post) => ({
+      data: getPosts.map((post) => ({
         ...post,
         _html: {
           title: decodeHtmlEntities(post._html.title),
@@ -167,13 +204,15 @@ export const streamTimelinePosts = async (
     });
     res.flushHeaders(); // flush the headers to establish SSE with client
 
-    const pipeline = [{ $match: { operationType: { $in: ["insert", "update", "delete"] } } }];
+    const pipeline = [
+      { $match: { operationType: { $in: ["insert", "update", "delete"] } } },
+    ];
     const watchPost = Posts.watch(pipeline); // watch for changes in posts collection
 
     watchPost.on("change", async (change) => {
       // Listen for changes and send updated posts to client
       const eventType = change.operationType;
-      const post: postProps = change.fullDocument as postProps;
+      const post: postProps = change.fullDocument;
 
       if (eventType === "delete") {
         // send post id to client when post is deleted
@@ -227,20 +266,21 @@ export const getSavePosts = async (
     const { skip = 0, limit = 0 } = req.query;
     const { saves } = req.session.user!;
 
-    if (!saves.length) createError({ message: "No saves yet", statusCode: 404 });
-    
-    const posts: postProps[] = await Posts.find({
+    if (!saves.length)
+      createError({ message: "No saves yet", statusCode: 404 });
+
+    const posts = await Posts.find({
       _id: { $in: saves },
       status: "published",
     })
       .sort({ updatedAt: -1 })
       .skip(Number(skip))
       .limit(Number(limit));
-    if (!posts)
-      createError({ message: "Posts not found", statusCode: 404 });
+    if (!posts) createError({ message: "Posts not found", statusCode: 404 });
+    const getPosts = posts.map(post => post.toObject());
 
     res.status(200).json({
-      data: posts.map((post) => ({
+      data: getPosts.map((post) => ({
         ...post,
         _html: {
           title: decodeHtmlEntities(post._html.title),
@@ -254,8 +294,9 @@ export const getSavePosts = async (
     next(error);
   }
 };
-// Get single post controller
-export const getPost = async (
+
+// Get posts controller
+export const getUserPosts = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -266,28 +307,33 @@ export const getPost = async (
     if (!errors.isEmpty())
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { id } = req.params;
+    const user = req.session.user!;
+    const { skip = 0,limit = 0 } = req.query as unknown as { skip: number; limit: number};
 
-    const post: postProps | null = await Posts.findById(id, {
-      status: "published",
-    });
-    if (!post) createError({ message: "Post not found", statusCode: 404 });
+    const posts = await Posts.find({author: user.userName})
+      .sort({ updatedAt: -1 })
+      .skip(Number(skip))
+      .limit(Number(limit));
+    if (!posts) createError({ message: "No User posts was found", statusCode: 404 });
+    const getPosts = posts.map(post => post.toObject());
 
-    res.status(200).json({
-      data: {
-        ...post,
-        _html: {
-          title: decodeHtmlEntities(post?._html.title || ""),
-          body: decodeHtmlEntities(post?._html.body || ""),
-        },
-      },
-      message: "Post fetched successfully",
+    res.status(200).send({
+      data: getPosts
+        .map((post) => ({
+          ...post,
+          _html: {
+            title: decodeHtmlEntities(post._html.title),
+            body: decodeHtmlEntities(post._html.body),
+          },
+        })),
+      message: "Posts fetched successfully",
       success: true,
     });
   } catch (error) {
     next(error);
   }
 };
+
 // Add Publish posts controller
 export const addPost = async (
   req: Request,
@@ -302,32 +348,45 @@ export const addPost = async (
 
     const { userName } = req.session.user!;
 
-    const image_from_multer = req.file?.filename;
-    const { image, title, body, _html, slug, catigories, mentions }: postProps =
-      req.body;
-    const filteredSlug = slug.toLocaleLowerCase().replace(/\//g, "");
+    // Parse request body
+    for (const key in req.body) {
+      let value: string = req.body[key];
+      try {
+        value = JSON.parse(value);
+      } catch {
+        createError({ message: "Invalid JSON data. Please provide only json data", statusCode: 422 });
+      }
+      req.body[key] = value;
+    }
 
-    let post = new Posts({
+    const image_from_multer = req.file?.filename;
+    const { image, title, body, _html, slug, catigories, mentions }: postProps = req.body;
+    const filteredSlug = slug.toLowerCase().replace(/\//g, "-");
+
+    const post = await Posts.create({
+      author: userName,
       title,
+      image: image_from_multer || image,
       body,
       _html,
       slug: filteredSlug,
       catigories,
       mentions,
-      author: userName,
-      image: image_from_multer || image,
       url: userName + "/" + filteredSlug,
       status: "published",
+      likes: [],
+      views: [],
+      shares: [],
     });
-    post = await post.save();
     if (!post) createError({ message: "Post not added", statusCode: 400 });
+    const getPost = post.toObject();
 
     res.status(201).json({
       data: {
-        ...post,
+        ...getPost,
         _html: {
-          title: decodeHtmlEntities(post._html.title),
-          body: decodeHtmlEntities(post._html.body),
+          title: decodeHtmlEntities(getPost._html.title),
+          body: decodeHtmlEntities(getPost._html.body),
         },
       },
       message: "Post added successfully",
@@ -350,6 +409,18 @@ export const editPost = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { id } = req.params;
+
+    // Parse request body
+    for (const key in req.body) {
+      let value: string = req.body[key];
+      try {
+        value = JSON.parse(value);
+      } catch {
+        createError({ message: "Invalid JSON data. Please provide only json data", statusCode: 422 });
+      }
+      req.body[key] = value;
+    }
+
     const image_from_multer = req.file?.filename;
     const {
       image,
@@ -364,7 +435,7 @@ export const editPost = async (
       status,
     }: postProps = req.body;
 
-    const post: postProps | null = await Posts.findByIdAndUpdate(
+    const post = await Posts.findByIdAndUpdate(
       id,
       {
         image: image_from_multer || image,
@@ -380,14 +451,64 @@ export const editPost = async (
       },
       { new: true }
     );
-    if (!post) createError({ message: "Post not found", statusCode: 404 });
+    if (!post) return createError({ message: "Post not found", statusCode: 404 });
+    const getPost = post.toObject();
 
     res.status(200).json({
       data: {
-        ...post,
+        ...getPost,
         _html: {
-          title: decodeHtmlEntities(post?._html.title || ""),
-          body: decodeHtmlEntities(post?._html.body || ""),
+          title: decodeHtmlEntities(getPost._html.title),
+          body: decodeHtmlEntities(getPost._html.body),
+        },
+      },
+      message: "Post updated successfully",
+      success: true,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+// Partialy edit post
+export const partialEditPost = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Validate user input
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      createError({ message: errors.array()[0].msg, statusCode: 422 });
+
+    const { id } = req.params;
+
+    const {     
+      likes,
+      views,
+      shares,
+      status,
+    }: postProps = req.body;
+
+    const post = await Posts.findByIdAndUpdate(
+      id,
+      {        
+        likes,
+        views,
+        shares,
+        status,
+      },
+      { new: true }
+    );
+    if (!post) return createError({ message: "Post not found", statusCode: 404 });
+    const getPost = post.toObject();
+
+    res.status(200).json({
+      data: {
+        ...getPost,
+        _html: {
+          title: decodeHtmlEntities(getPost._html.title),
+          body: decodeHtmlEntities(getPost._html.body),
         },
       },
       message: "Post updated successfully",

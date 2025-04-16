@@ -50,7 +50,7 @@ export const getSingleUser = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { userName } = req.params;
-    const user = await Users.findById({ userName }).select(
+    const user = await Users.findOne({ userName }).select(
       "-password -_id -googleId -isValidPassword -sessions -verificationToken -verificationTokenExpiringdate -forgetPassWordToken -forgetPassWordTokenExpiringdate -changeEmailVerificationToke -changeEmailVerificationTokenExpiringdate -requestChangeEmail -__v"
     );
 
@@ -59,7 +59,7 @@ export const getSingleUser = async (
       success: true,
       data: user,
       message: "User found successfully",
-    });
+    });       
   } catch (error) {
     next(error);
   }

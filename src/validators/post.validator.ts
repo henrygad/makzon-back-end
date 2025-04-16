@@ -5,6 +5,10 @@ export const getPostsValidator = [
     query(["skip", "limit"]).optional().trim().isNumeric().withMessage("Skip, Limit must be a number").escape(),
 ];
 export const validatePostParam = [
+    param("author").isString().withMessage("Author name must be a string").escape(),
+    param("slug").isString().withMessage("Blogpost slug must be a string").escape(),
+];
+export const validatePostId = [
     param("id").isMongoId().withMessage("Invalid post id").escape(),
 ];
 export const validatePostQueries = [

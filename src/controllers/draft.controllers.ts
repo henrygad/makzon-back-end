@@ -14,12 +14,13 @@ export const getDrafts = async (
   try {
     const { userName } = req.session.user!;
 
-    const drafts: postProps[] = await Drafts.find({ author: userName });
-    if (!drafts)
-      createError({ message: "Draft not found", statusCode: 404 });
+    const drafts = await Drafts.find({ author: userName });
+    if (!drafts) return createError({ message: "Draft not found", statusCode: 404 });
+    const getDrafts = drafts.map(draft => draft.toObject());    
 
     res.status(200).json({
-      data: drafts.map((draft) => ({
+      data: getDrafts
+        .map((draft) => ({
         ...draft,
         _html: {
           title: decodeHtmlEntities(draft._html.title),
@@ -47,15 +48,16 @@ export const getDraft = async (
 
     const { id } = req.params;
 
-    const draft: postProps | null = await Drafts.findById(id);
-    if (!draft) createError({ message: "Draft not found", statusCode: 404 });
+    const draft = await Drafts.findById(id);
+    if (!draft) return createError({ message: "Draft not found", statusCode: 404 });
+    const getDraft = draft.toObject();
 
     res.status(200).json({
       data: {
-        ...draft,
+        ...getDraft,
         _html: {
-          title: decodeHtmlEntities(draft?._html.title || ""),
-          body: decodeHtmlEntities(draft?._html.body || ""),
+          title: decodeHtmlEntities(getDraft._html.title),
+          body: decodeHtmlEntities(getDraft._html.body),
         },
       },
       message: "Draft fetched successfully",
@@ -65,6 +67,7 @@ export const getDraft = async (
     next(error);
   }
 };
+
 // Add drafts controller
 export const addDraft = async (
   req: Request,
@@ -79,12 +82,18 @@ export const addDraft = async (
 
     const { userName } = req.session.user!;
 
-    const image_from_multer = (
-      req.file?.filename +
-      "/" +
-      req.file?.filename
-    ).trim();
+    // Parse request body    
+    for (const key in req.body) {
+      let value: string = req.body[key];
+      try {
+        value = JSON.parse(value);
+      } catch {
+        createError({ message: "Invalid JSON data. Please provide only json data", statusCode: 422 });
+      }
+      req.body[key] = value;
+    }
 
+    const image_from_multer = req.file?.filename;
     const {
       publishedId,
       image,
@@ -93,31 +102,30 @@ export const addDraft = async (
       _html,
       slug,
       catigories,
-      mentions,
-    }: postProps = req.body;
-    const filteredSlug = slug.toLocaleLowerCase().replace(/\//g, "");
+      mentions,    
+    }: postProps = req.body;    
 
-    let draft = new Drafts({
+    const draft = await Drafts.create({
       publishedId,
       title,
+      image: image_from_multer || image,
       body,
       _html,
-      slug: filteredSlug,
+      slug,
       catigories,
       mentions,
       author: userName,
-      image: image_from_multer || image,
-      status: "draft",
-    });
-    draft = await draft.save();
-    if (!draft) createError({ message: "Draft not added", statusCode: 400 });
+      status: "drafted",
+    });    
+    if (!draft) return createError({ message: "Draft not added", statusCode: 400 });
+    const getDraft = draft.toObject();    
 
     res.status(201).json({
       data: {
-        ...draft,
+        ...getDraft,
         _html: {
-          title: decodeHtmlEntities(draft._html.title),
-          body: decodeHtmlEntities(draft._html.body),
+          title: decodeHtmlEntities(getDraft._html.title),
+          body: decodeHtmlEntities(getDraft._html.body),
         },
       },
       message: "Draft added successfully",
@@ -140,22 +148,30 @@ export const editDraft = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { id } = req.params;
-    const image_from_multer = (
-      req.file?.filename +
-      "/" +
-      req.file?.filename
-    ).trim();
+
+    // Parse request body
+    for (const key in req.body) {
+      let value: string = req.body[key];
+      try {
+        value = JSON.parse(value);
+      } catch {
+        createError({ message: "Invalid JSON data. Please provide only json data", statusCode: 422 });
+      }
+      req.body[key] = value;
+    }
+    const image_from_multer = req.file?.filename;
     const {
       publishedId,
       image,
       title,
       body,
       _html,
+      slug,
       catigories,
       mentions,
-    }: postProps = req.body;
+    }: postProps = req.body; 
 
-    const draft: postProps | null = await Drafts.findByIdAndUpdate(
+    const draft = await Drafts.findByIdAndUpdate(
       id,
       {
         publishedId,
@@ -165,18 +181,20 @@ export const editDraft = async (
         _html,
         catigories,
         mentions,
+        slug,
         status: "draft",
       },
       { new: true }
     );
-    if (!draft) createError({ message: "Draft not found", statusCode: 404 });
+    if (!draft) return createError({ message: "Draft not found", statusCode: 404 });
+    const getDraft = draft.toObject();  
 
     res.status(200).json({
       data: {
-        ...draft,
+        ...getDraft,
         _html: {
-          title: decodeHtmlEntities(draft?._html.title || ""),
-          body: decodeHtmlEntities(draft?._html.body || ""),
+          title: decodeHtmlEntities(getDraft._html.title),
+          body: decodeHtmlEntities(getDraft._html.body),
         },
       },
       message: "draft updated successfully",

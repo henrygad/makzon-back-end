@@ -14,7 +14,7 @@ export const isAuthenticated =  async(
       if (req.session.user) {     
         const user = await Users.findById(req.session.user._id);
         if (user && user.sessions.find(session => session.token === req.session.id)) {
-          req.session.user = user; // Update session with the latest user data
+          req.session.user = user;
           next();
         } else { 
           createError({ statusCode: 401, message: "Unauthorized: user has been logout" });
