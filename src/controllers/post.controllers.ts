@@ -19,15 +19,13 @@ export const getPosts = async (
 
     const {
       status,
-      author,
-      catigory,
+      author,   
       updatedAt = "-1",
       skip = 0,
       limit = 0,
     } = req.query as unknown as {
       status: string;
-      author: string;
-      catigory: string;
+      author: string;     
       updatedAt: string;
       skip: number;
       limit: number;
@@ -41,16 +39,9 @@ export const getPosts = async (
       status: string;
       author: string;
     }) => {
-      if (status && author && catigory)
-        return { status, author, catigories: { $in: [catigory] } };
-      else if (status && author) return { status, author };
-      else if (status && catigory)
-        return { status, catigories: { $in: [catigory] } };
-      else if (author && catigory)
-        return { author, catigories: { $in: [catigory] } };
-      else if (author) return { author, catigories: { $in: [catigory] } };
-      else if (status) return { status, catigories: { $in: [catigory] } };
-      else if (catigory) return { author, catigories: { $in: [catigory] } };
+      if (status && author) return { status, author };           
+      else if (author) return { author };
+      else if (status) return { status };    
       else return {};
     };
 
@@ -92,10 +83,10 @@ export const getPost = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { author, slug } = req.params;
-  
-    const post = await Posts.findOne({author, slug});
-    if (!post) return createError({ message: "Post not found", statusCode: 404 });    
-    const getPost = post.toObject();    
+
+    const post = await Posts.findOne({ author, slug });
+    if (!post) return createError({ message: "Post not found", statusCode: 404 });
+    const getPost = post.toObject();
 
     res.status(200).json({
       data: {
@@ -308,9 +299,9 @@ export const getUserPosts = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const user = req.session.user!;
-    const { skip = 0,limit = 0 } = req.query as unknown as { skip: number; limit: number};
+    const { skip = 0, limit = 0 } = req.query as unknown as { skip: number; limit: number };
 
-    const posts = await Posts.find({author: user.userName})
+    const posts = await Posts.find({ author: user.userName })
       .sort({ updatedAt: -1 })
       .skip(Number(skip))
       .limit(Number(limit));
@@ -483,7 +474,7 @@ export const partialEditPost = async (
 
     const { id } = req.params;
 
-    const {     
+    const {
       likes,
       views,
       shares,
@@ -492,7 +483,7 @@ export const partialEditPost = async (
 
     const post = await Posts.findByIdAndUpdate(
       id,
-      {        
+      {
         likes,
         views,
         shares,

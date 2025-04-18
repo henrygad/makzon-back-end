@@ -10,10 +10,11 @@ const commentSchema = new Schema({
         require: [true, "Please provide a comment id"]
     },
     replyId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId || null,
         ref: "comments",
         default: null
     },
+    children: [{ type: mongoose.Schema.Types.ObjectId, ref: "comments", }],
     author: {
         type: String,
         require: [true, "Please provide an author username"],
@@ -22,8 +23,8 @@ const commentSchema = new Schema({
     url_leading_to_comment_parent: {
         type: String,
         require: [true, "Please provide comment url"],
-    },    
-    replingTo: {
+    },
+    replyingTo: {
         type: [String],
         require: [true, "Please provide a reply to"]
     },
