@@ -36,7 +36,7 @@ type userProps = {
   followings: string[];
   followers: string[];
   timeline: string[];
-  saves: string[];
+  saves: mongoose.Schema.Types.ObjectId[];
   createdAt: Date,
   updatedAt: Date,
 };

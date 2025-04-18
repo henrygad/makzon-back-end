@@ -3,6 +3,7 @@ import Users from "../models/user.model";
 import createError from "../utils/error";
 import userProps from "../types/user.type";
 import { validationResult } from "express-validator";
+import mongoose from "mongoose";
 
 // Get all users controller
 export const getAllUsers = async (
@@ -59,7 +60,7 @@ export const getSingleUser = async (
       success: true,
       data: user,
       message: "User found successfully",
-    });       
+    });
   } catch (error) {
     next(error);
   }
@@ -171,11 +172,18 @@ export const editAuthUserSaves = async (
     if (!errors.isEmpty())
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { save }: { save: string } = req.body;
+    const { save }: { save: mongoose.Schema.Types.ObjectId, } = req.body;
 
     if (req.session.user) {
       const user = await Users.findById(req.session.user._id);
-      if (user) {
+      if (!user) return createError({ statusCode: 404, message: "User not found" });
+
+      if (user.saves.includes(save)) {
+        // remove save id 
+        user.saves = user.saves.filter(saveId => saveId !== save);
+        req.session.user = await user.save();
+      } else {
+        // add save id
         user.saves.push(save);
         req.session.user = await user.save();
       }
@@ -183,7 +191,7 @@ export const editAuthUserSaves = async (
       res.status(200).json({
         success: true,
         data: { save },
-        message: "User saves updated Successfully",
+        message: "Successfully updated use saves",
       });
     }
   } catch (error: unknown) {
@@ -246,62 +254,48 @@ export const editAuthUserFollowings = async (
   try {
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty())
-      createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { userName }: { userName: string } = req.body;
-    if (!req.session.user)
-      return createError({ message: "Unauthorized user", statusCode: 401 });
+    const { friendUserName }: { friendUserName: string } = req.body;
+    const user = req.session.user!;
 
-    const isFollowing = req.session.user.followings.includes(userName);
-    // If already followed user
-    if (isFollowing) {
-      // Unfollow user
-      // Delete current username from friend
-      const followedUser = await Users.findOneAndUpdate(
-        { userName },
-        { $pull: { followers: req.session.user.userName } },
+    const isFollowing = user.followings.includes(friendUserName); // Check is following username
+
+    if (isFollowing) { // If alread following this username
+      // Unfollow user     
+      const unFollowedUser = await Users.findOneAndUpdate(
+        { userName: friendUserName },
+        { $pull: { followers: user.userName } },
         { runValidators: true }
       );
-      if (!followedUser)
-        createError({
-          statusCode: 404,
-          message: "User not found or User not unfollowed",
-        });
+      if (!unFollowedUser) return createError({ statusCode: 404, message: "User not found or User not unfollowed", });
 
       // Remove friend username from user following
-      const user = await Users.findById(req.session.user._id);
-      if (user && followedUser) {
-        user.followings.filter((name) => name !== followedUser.userName);
-        user.markModified("followings");
-        req.session.user = await user.save();
-      }
-    } else {
-      // Follow user
-      // Add current username to friend followers
+      const authUser = await Users.findById(user._id);
+      if (!authUser) return createError({ statusCode: 404, message: "Auth user not found", });
+      authUser.followings.filter((name) => name !== unFollowedUser.userName);
+      authUser.markModified("followings");
+      req.session.user = await authUser.save();
+    } else { // Follow user      
+
       const followedUser = await Users.findOneAndUpdate(
-        { userName },
-        { $push: { followers: req.session.user.userName } },
+        { userName: friendUserName },
+        { $push: { followers: user.userName } },
         { runValidators: true }
       );
-      if (!followedUser)
-        createError({
-          statusCode: 404,
-          message: "User not found or User not followed",
-        });
+      if (!followedUser) return createError({ statusCode: 404, message: "User not found or User not followed", });
 
-      // Remove friend username from user following
-      const user = await Users.findById(req.session.user._id);
-      if (user) {
-        user.followings.push(userName);
-        user.markModified("followings");
-        req.session.user = await user.save();
-      }
+      // Add friend username from user following
+      const authUser = await Users.findById(user._id);
+      if (!authUser) return createError({ statusCode: 404, message: "Auth user not found", });
+      authUser.followings.push(friendUserName);
+      authUser.markModified("followings");
+      req.session.user = await authUser.save();
     }
 
     res.status(200).json({
       success: true,
-      data: { userName },
+      data: { friendUserName },
       message: isFollowing
         ? "User unfollowed Successfully"
         : "User followed Successfully",
@@ -327,7 +321,7 @@ export const deleteAuthUser = async (
     if (user.password) { // Check if have a password
       // Comfirm user password
       const isMatch = user.isValidPassword(password);
-      if (!isMatch) return createError({ statusCode: 401, message: "Invalid password" });   
+      if (!isMatch) return createError({ statusCode: 401, message: "Invalid password" });
     }
 
     // Delete user

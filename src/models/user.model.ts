@@ -60,7 +60,7 @@ const UserSchema = new Schema(
     followings: [String],
     followers: [String],
     timeline: [String],
-    saves: [String],
+    saves: [mongoose.Schema.Types.ObjectId],
   },
   { timestamps: true }
 );

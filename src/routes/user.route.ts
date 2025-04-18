@@ -35,9 +35,8 @@ router.get(
   isAuthenticated,
   streamUserFollowers
 );
-route.post("/saves", savesUserValidator, isAuthenticated, editAuthUserSaves);
-router.post(
-  "/follow",
+route.post("/save", savesUserValidator, isAuthenticated, editAuthUserSaves);
+router.post( "/follow",
   followUserValidator,
   isAuthenticated,
   editAuthUserFollowings

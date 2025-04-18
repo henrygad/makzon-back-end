@@ -34,11 +34,11 @@ export const deleteUserValidator = [
 export const savesUserValidator = [
     body("save")
         .trim()
-        .isString().withMessage("Field must be a string")
+        .isMongoId().withMessage("Field must be a MongoId")
         .escape()
 ];
 export const followUserValidator = [
-    body("userName")
+    body("friendUserName")
         .trim()
         .isString().withMessage("Field must be a string")
         .escape()
