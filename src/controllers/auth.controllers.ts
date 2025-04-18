@@ -15,52 +15,59 @@ export const googleAuthRequest = async (
 ) => {
   try {
     // Redirect user to google authentication page
-    const url = `https://accounts.google.com/o/oauth2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.GOOGLE_REDIRCT_URI}&response_type=code&scope=openid%20email%20profile`;
-    res.redirect(url);
+    const redirectUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+    const params = new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID!,
+      redirect_uri: process.env.GOOGLE_REDIRCT_URI!,
+      response_type: "code",
+      scope: "openid email profile",
+      access_type: "offline",
+      prompt: "consent",
+    });
+    res.redirect(`${redirectUrl}?${params.toString()}`);
   } catch (error) {
     next(error);
   }
 };
 // google authentication return callback
 export const googleLogin = async (
+ 
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { code } = req.query;
-    if (!code) res.redirect(process.env.DOMAIN_NAME_FRONTEND + "/login");
+    if (!code) {      
+      return res.redirect(process.env.DOMAIN_NAME_FRONTEND + "/login");
+    };
 
     // Exchange code for Google Access Token
-    const { data } = await axios.post(
-      "https://oauth2.googleapis.com/token",
+    const { data } = await axios.post("https://oauth2.googleapis.com/token",
       null,
       {
         params: {
+          code,
           client_id: process.env.GOOGLE_CLIENT_ID,
           client_secret: process.env.GOOGLE_CLIENT_SECRET,
           redirect_uri: process.env.GOOGLE_REDIRCT_URI,
           grant_type: "authorization_code",
-          code,
         },
       }
     );
 
     // Get user info
-    const {
-      data: googleUser,
-    }: { data: { given_name: string; email: string; sub: string } } =
-      await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: `Bearer ${data.access_token}` }, });
+    const googleRes = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: `Bearer ${data.access_token}` }, });
+    const { email, sub } = googleRes.data as { given_name: string; email: string; sub: string };
 
     // check if goolge user already signup
-    let user = await Users.findOne({ email: googleUser.email });
-
+    let user = await Users.findOne({ email });
     if (!user) {
       // create new user from user google data
       user = new Users({
-        userName: googleUser.email.split("@")[0],
-        email: googleUser.email,
-        googleId: googleUser.sub,
+        userName: email.split("@")[0],
+        email: email,
+        googleId: sub,
         userVerified: true,
       });
       await user.save();
@@ -215,7 +222,7 @@ export const logout = async (
   next: NextFunction
 ) => {
   try {
-   
+
     if (req.session.user) {
       const user = await Users.findById(req.session.user._id);
       if (user) {
@@ -238,7 +245,7 @@ export const logout = async (
     } else {
       createError({ statusCode: 401, message: "Unauthorized" });
     }
-   
+
   } catch (error) {
     next(error);
   }
@@ -271,8 +278,21 @@ export const logoutRest = async (
     } else {
       createError({ statusCode: 401, message: "Unauthorized" });
     }
-       
+
   } catch (error) {
     next(error);
   }
+};
+
+// Destroy session
+export const destroySession = async (
+  req: Request,
+  res: Response,
+) => {
+  req.session.destroy(() => {
+    res.clearCookie("makzonBckendSession");
+    res.status(200).json({
+      message: "You've successfully destroy client session",
+    });
+  });
 };

@@ -321,15 +321,17 @@ export const deleteAuthUser = async (
     // Validate user input
     const errors = validationResult(req);
     if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
-
     const { password } = req.query as { password: string };
-    if (!req.session.user) return createError({ message: "", statusCode: 401 });
-    // Comfirm user password
-    const isMatch = req.session.user.isValidPassword(password);
-    if (!isMatch) createError({ statusCode: 401, message: "Invalid password" });
+    const user = req.session.user!;
+
+    if (user.password) { // Check if have a password
+      // Comfirm user password
+      const isMatch = user.isValidPassword(password);
+      if (!isMatch) return createError({ statusCode: 401, message: "Invalid password" });   
+    }
 
     // Delete user
-    const deletedUser = await Users.findByIdAndDelete(req.session.user._id);
+    const deletedUser = await Users.findByIdAndDelete(user._id);
     if (!deletedUser) createError({ statusCode: 404, message: "User not found" });
     req.session.user = undefined; // Clear session user property
 

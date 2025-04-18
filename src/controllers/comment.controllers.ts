@@ -19,11 +19,11 @@ export const getComments = async (
     if (!errors.isEmpty())
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { author, postId, replyId = null, skip, limit, updatedAt } =
+    const { author, postId, replyId, skip, limit, updatedAt } =
       req.query as unknown as {
         author: string;
         postId: mongoose.Schema.Types.ObjectId;
-        replyId: mongoose.Schema.Types.ObjectId | null;
+        replyId: mongoose.Schema.Types.ObjectId | string;
         skip: number;
         limit: number;
         updatedAt: string;
@@ -33,14 +33,14 @@ export const getComments = async (
     const fillterCommentBy = ({
       author,
       postId,
-      replyId = null,
+      replyId,
     }: {
       author: string;
       postId: mongoose.Schema.Types.ObjectId;
-      replyId: mongoose.Schema.Types.ObjectId | null;
+      replyId: mongoose.Schema.Types.ObjectId | string;
     }) => {
-      if (postId && replyId === null) {
-        return { postId, replyId };
+      if (postId && replyId === "null") {
+        return { postId, replyId: null };
       } else if (author) {
         return { author };
       } else if (postId) {
@@ -59,7 +59,7 @@ export const getComments = async (
       .sort({ updatedAt: filterBytime });
     if (!comments) return createError({ message: "Comments not found", statusCode: 404 });
 
-    const getComments = comments.map(comment => comment.toObject()) ;
+    const getComments = comments.map(comment => comment.toObject());
 
     res.status(200).json({
       message: "Comments found",
