@@ -23,6 +23,8 @@ const notificationSchema = new Schema(
       default: false,
       required: [true, "Must provide a notification checked"],
     },
+    options: Schema.Types.Mixed,
+    targetTitle: String,
   },
   { timestamps: true }
 );

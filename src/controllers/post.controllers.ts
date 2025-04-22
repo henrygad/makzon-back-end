@@ -79,12 +79,11 @@ export const getPost = async (
   try {
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty())
-      createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { author, slug } = req.params;
+    const { author, slug } = req.params;    
 
-    const post = await Posts.findOne({ author, slug });
+    const post = await Posts.findOne({ author, slug: decodeHtmlEntities(slug) });
     if (!post) return createError({ message: "Post not found", statusCode: 404 });
     const getPost = post.toObject();
 
@@ -255,7 +254,7 @@ export const getSavePosts = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { skip = 0, limit = 0 } = req.query;
-    const { saves } = req.session.user!;
+    const { saves } = req.session.user!;    
 
     if (!saves.length)
       createError({ message: "No saves yet", statusCode: 404 });
@@ -469,8 +468,7 @@ export const partialEditPost = async (
   try {
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty())
-      createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty())return createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { id } = req.params;
 

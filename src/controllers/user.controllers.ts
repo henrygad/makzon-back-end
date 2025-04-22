@@ -252,7 +252,7 @@ export const editAuthUserFollowings = async (
   next: NextFunction
 ) => {
   try {
-    // Validate user input
+    // Validate user input    
     const errors = validationResult(req);
     if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 

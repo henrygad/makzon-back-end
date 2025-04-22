@@ -14,16 +14,17 @@ export const getAuthUserNotifications = async (
   try {
     const { userName } = req.session.user!;
 
-    const notifications: notificationProps[] = await Notifications.find({
+    const notifications = await Notifications.find({
       to: userName,
     });
     if (!notifications) return createError({ message: "Notifications not found", statusCode: 404 });
+    const getNotifications = notifications.map(notic => notic.toObject());
 
     res.status(200).json({
       message: "Notifications fetched successfully",
-      data: notifications.map((notification) => ({
-        ...notification,
-        message: decodeHtmlEntities(notification.message),
+      data: getNotifications.map((notic) => ({
+        ...notic,
+        message: decodeHtmlEntities(notic.message),
       })),
       successfull: true,
     });
@@ -104,7 +105,7 @@ export const addNotification = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { userName } = req.session.user!;
-    const { type, to, message, url } = req.body as unknown as notificationProps;
+    const { type, to, message, url, targetTitle, options }: notificationProps = req.body;    
 
     let notification = new Notifications({
       type,
@@ -113,16 +114,18 @@ export const addNotification = async (
       from: userName,
       to,
       checked: false,
+      targetTitle,
+      options
     });
     notification = await notification.save();
-    if (!notification)
-      createError({ message: "Failed to add notification", statusCode: 500 });
+    if (!notification) return createError({ message: "Failed to add notification", statusCode: 500 });
+    const getNotification = notification.toObject();
 
     res.status(201).json({
       message: "Notification added successfully",
       data: {
-        ...notification,
-        message: decodeHtmlEntities(notification.message),
+        ...getNotification,
+        message: decodeHtmlEntities(getNotification.message),
       },
       successfull: true,
     });
@@ -143,20 +146,19 @@ export const checkNotification = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { id } = req.params;
-    const notification: notificationProps | null =
-      await Notifications.findByIdAndUpdate(
-        id,
-        { checked: true },
-        { new: true }
-      );
-    if (!notification)
-      createError({ message: "Notification not found", statusCode: 404 });
+    const notification = await Notifications.findByIdAndUpdate(
+      id,
+      { checked: true },
+      { new: true }
+    );
+    if (!notification) return ({ message: "Notification not found", statusCode: 404 });
+    const getNotification = notification.toObject();
 
     res.status(200).json({
       message: "Notification checked successfully",
       data: {
-        ...notification,
-        message: decodeHtmlEntities(notification?.message || ""),
+        ...getNotification,
+        message: decodeHtmlEntities(getNotification.message || ""),
       },
       successfull: true,
     });
