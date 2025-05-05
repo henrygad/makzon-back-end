@@ -4,11 +4,11 @@ import createError from "../utils/error";
 import OTP from "../utils/OTP";
 import sendEmail from "../config/email.config";
 import "dotenv/config";
-import hideEmail from "../utils/hideEmail";
 import { validationResult } from "express-validator";
 
-// Send reset password otp
-export const sendForgetPasswordOTP = async (
+
+// Find user if exist
+export const findUser = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -19,24 +19,23 @@ export const sendForgetPasswordOTP = async (
     const errors = validationResult(req);
     if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { email }: { email: string } = req.body;
+    const { identity }: { identity: string } = req.body;
 
     // Find user
-    const user = await Users.findOne({ email });
-    if (!user) createError({ statusCode: 404, message: "User not found" });
-
+    const user = await Users.findOne({
+      $or: [{ userName: identity }, { email: identity }],
+    });
+    if (!user) return createError({ statusCode: 404, message: "User not found" });
+    
     // Generate and send OTP token
     const otp = OTP(4);
-    const expireOn: number = Date.now() + 15 * 60 * 1000; // expires in 15 minutes
-    const url =
-      process.env.DOMAIN_NAME +
-      `/api/auth/password/forget?email=${user?.email}&otp=${otp}`;
+    const expireOn: number = Date.now() + 5 * 60 * 1000; // expires in 5 minutes
 
     // Send OTP token to user mail box
     const result = await sendEmail({
-      emailTo: email,
+      emailTo: user.email,
       subject: "Reset password OTP request",
-      template: `Hi ${user?.userName}. Your Reset password OTP is: ${otp}. or click this url ${url}`,
+      template: `Hi ${user?.userName}. Your Reset password OTP is: ${otp}. This OTP is valid for 5 minutes. If you did not request this, please ignore this email.`,  
     });
     if (!result.sent)
       createError({
@@ -52,21 +51,25 @@ export const sendForgetPasswordOTP = async (
     }
 
     res.status(200).json({
-      message:
-        "An OTP token has been sent to your email to reset your password",
-      email: hideEmail(user?.email || ""),
+      message: "successfully found user",
+      data: user.toObject(),      
     });
+
   } catch (error) {
     next(error);
   }
 };
 // Verify otp
-export const verifyForgetPasswordOTP = async (
+export const verifyOTP = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
+
+    // Validate user input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { email, otp } = req.query as { email: string, otp: string };
 
@@ -89,7 +92,7 @@ export const verifyForgetPasswordOTP = async (
     }
 
     res.status(200).json({
-      message: "Email verification successful for reseting your password",
+      message: "User verification was successful. You  can now reseting password",
       resetPasswordUrl: "/api/auth/password/reset",
     });
   } catch (error) {
@@ -114,6 +117,7 @@ export const resetPassword = async (
     // Find user
     const user = await Users.findOne({
       email,
+      forgetPassWordToken: "",
       forgetPassWordTokenExpiringdate: { $gt: Date.now() },
     });
     if (!user)

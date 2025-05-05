@@ -19,7 +19,7 @@ import {
   changeEmail,
   sendChangeEmailOTP,
 } from "../controllers/email.controllers";
-import { changePassword, resetPassword, sendForgetPasswordOTP, verifyForgetPasswordOTP } from "../controllers/password.controllers";
+import { changePassword, findUser, resetPassword, verifyOTP } from "../controllers/password.controllers";
 
 const router = Router();
 
@@ -36,8 +36,8 @@ router.get("/opt/", isAuthenticated, sendVerificationOTP);
 router.get("/verify", authValidator_varification_query, isAuthenticated, verifyUser);
 
 // Reset or change password
-router.get("/password/forget", authValidator_varification_query, verifyForgetPasswordOTP);
-router.post("/password/forget", authValidator_varification_body, sendForgetPasswordOTP);
+router.get("/password/forget", authValidator_varification_query, verifyOTP);
+router.post("/password/forget", authValidator_varification_body, findUser);
 router.post("/password/reset", authValidator_resetPassword, resetPassword);
 router.post(
   "/password/change",

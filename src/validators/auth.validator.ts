@@ -28,14 +28,14 @@ export const authValidator_register = [
 export const authValidator_login = [
     body("identity")
         .trim()
+        .isString().withMessage("Field must be a string")
         .escape(),
-
-    body("password")
+    body("password")        
         .trim()    
         .escape()
 ];
 export const authValidator_varification_body = [
-    body("email")
+    body("identity")
         .trim()
         .isString().withMessage("Field must be a string")
         .toLowerCase()
