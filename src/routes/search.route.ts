@@ -6,7 +6,7 @@ const router = Router();
 
 router.get("/", searchValidator, search);
 router.get("/history", getSearchHistoris);
-router.post("/", searchHistoryValidator_query, addSearchHistory);
-router.delete("/", searchHistoryValidator_param, deleteSearchHistory);
+router.post("/history", searchHistoryValidator_query, addSearchHistory);
+router.delete("/history", searchHistoryValidator_param, deleteSearchHistory);
 
 export default router;

@@ -3,8 +3,6 @@ import createError from "../utils/error";
 import Posts from "../models/post.model";
 import Users from "../models/user.model";
 import { decodeHtmlEntities } from "../utils/decode";
-import postProps from "../types/post.type";
-import userProps from "../types/user.type";
 import { validationResult } from "express-validator";
 
 // Search user and post controller
@@ -16,8 +14,7 @@ export const search = async (
   try {
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty())
-      createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const {
       title,
@@ -40,7 +37,7 @@ export const search = async (
 
     const filterByTime = updatedAt === "1" ? 1 : -1;
 
-    const posts: postProps[] = await Posts.find({
+    const posts = await Posts.find({
       $or: post,
       status: "published",
     })
@@ -48,7 +45,7 @@ export const search = async (
       .limit(limit ? Number(limit) : 0)
       .sort({ updatedAt: filterByTime });
 
-    const users: userProps[] = await Users.find({ $or: user })
+    const users = await Users.find({ $or: user })
       .skip(skip ? Number(skip) : 0)
       .limit(limit ? Number(limit) : 0)
       .sort({ updatedAt: filterByTime })
@@ -58,17 +55,20 @@ export const search = async (
     if (!posts && !users)
       createError({ statusCode: 404, message: "No search results found" });
 
+    const getPosts = posts.map(post => post.toObject());
+
     res.status(200).json({
       message: "Search results found",
       data: {
-        users,
-        posts: posts.map((post) => ({
-          ...post,
-          _html: {
-            title: decodeHtmlEntities(post._html.title),
-            body: decodeHtmlEntities(post._html.body),
-          },
-        })),
+        users: users.map((user) => user.toObject()),
+        posts: getPosts
+          .map((post) => ({
+            ...post,
+            _html: {
+              title: decodeHtmlEntities(post._html.title),
+              body: decodeHtmlEntities(post._html.body),
+            },
+          }))
       },
       success: true,
     });
@@ -82,14 +82,15 @@ export const getSearchHistoris = (
   res: Response,
   next: NextFunction
 ) => {
-  const { session } = req;
-  if (!session) return next(createError({ statusCode: 404, message: "No search history found" }));
+  const { session } = req;  
+
+  if (!session.searchHistory) return next(createError({ statusCode: 404, message: "No search history found" }));
+  
   res.status(200).json({
     message: "Search history retrieved successfully",
     data: session.searchHistory,
     success: true,
   });
-
 };
 // Add new search history
 export const addSearchHistory = (
@@ -105,16 +106,15 @@ export const addSearchHistory = (
   const { searched } = req.body;
 
   if (typeof req.session.searchHistory !== "object") {
-    req.session.searchHistory = [{ _id: "", search: "" }];
+    req.session.searchHistory = [];
   }
   const { searchHistory } = req.session;
 
-  if (!searchHistory?.find((history) => history.search === searched)) {
-    searchHistory.push({
+  if (!searchHistory.find((history) => history.search === searched)) {
+     req.session.searchHistory.push({
       _id: (Date.now() + Math.floor(Math.random() * 1000)).toString(),
       search: searched,
-    });
-    req.session.save();
+     });      
   }
 
   res.status(201).json({
@@ -154,3 +154,4 @@ export const deleteSearchHistory = (
     success: true,
   });
 };
+
