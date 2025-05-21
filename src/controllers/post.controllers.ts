@@ -185,7 +185,7 @@ export const streamTimelinePosts = async (
   next: NextFunction
 ) => {
   try {
-    const { timeline } = req.session.user!;
+    const { timeline, userName } = req.session.user!;
 
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -202,29 +202,34 @@ export const streamTimelinePosts = async (
     watchPost.on("change", async (change) => {
       // Listen for changes and send updated posts to client
       const eventType = change.operationType;
-      const post: postProps = change.fullDocument;
+      const post: postProps = change.fullDocument;      
+      console.log(eventType);
+      console.log(post);
 
-      if (eventType === "delete") {
-        // send post id to client when post is deleted
-        const _id = change.documentKey._id;
-        res.write(`data: ${JSON.stringify({ eventType, post: { _id } })}\n\n`);
-      } else {
-        // send post to client when post is inserted or updated
-        if (timeline.includes(post.author) && post.status === "published") {
-          res.write(
-            `data: ${JSON.stringify({
-              eventType,
-              post: {
-                ...post,
-                _html: {
-                  title: decodeHtmlEntities(post._html.title),
-                  body: decodeHtmlEntities(post._html.body),
+      if (post) {
+        if (eventType === "delete") {
+          // send post id to client when post is deleted
+          const _id = change.documentKey._id;
+          res.write(`data: ${JSON.stringify({ eventType, post: { _id } })}\n\n`);
+        } else {
+          // send post to client when post is inserted or updated
+          if ([userName, ...timeline].includes(post.author) && post.status === "published") {
+            res.write(
+              `data: ${JSON.stringify({
+                eventType,
+                post: {
+                  ...post,
+                  _html: {
+                    title: decodeHtmlEntities(post._html.title),
+                    body: decodeHtmlEntities(post._html.body),
+                  },
                 },
-              },
-            })}\n\n`
-          );
+              })}\n\n`
+            );
+          }
         }
       }
+      
     });
 
     watchPost.on("error", (error) => {
