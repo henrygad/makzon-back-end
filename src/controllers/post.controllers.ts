@@ -19,13 +19,13 @@ export const getPosts = async (
 
     const {
       status,
-      author,   
+      author,
       updatedAt = "-1",
       skip = 0,
       limit = 0,
     } = req.query as unknown as {
       status: string;
-      author: string;     
+      author: string;
       updatedAt: string;
       skip: number;
       limit: number;
@@ -39,9 +39,9 @@ export const getPosts = async (
       status: string;
       author: string;
     }) => {
-      if (status && author) return { status, author };           
+      if (status && author) return { status, author };
       else if (author) return { author };
-      else if (status) return { status };    
+      else if (status) return { status };
       else return {};
     };
 
@@ -81,7 +81,7 @@ export const getPost = async (
     const errors = validationResult(req);
     if (!errors.isEmpty()) createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const { author, slug } = req.params;    
+    const { author, slug } = req.params;
 
     const post = await Posts.findOne({ author, slug: decodeHtmlEntities(slug) });
     if (!post) return createError({ message: "Post not found", statusCode: 404 });
@@ -202,9 +202,7 @@ export const streamTimelinePosts = async (
     watchPost.on("change", async (change) => {
       // Listen for changes and send updated posts to client
       const eventType = change.operationType;
-      const post: postProps = change.fullDocument;      
-      console.log(eventType);
-      console.log(post);
+      const post: postProps = change.fullDocument;
 
       if (post) {
         if (eventType === "delete") {
@@ -213,7 +211,8 @@ export const streamTimelinePosts = async (
           res.write(`data: ${JSON.stringify({ eventType, post: { _id } })}\n\n`);
         } else {
           // send post to client when post is inserted or updated
-          if ([userName, ...timeline].includes(post.author) && post.status === "published") {
+          if ([userName, ...timeline].includes(post.author) && post.status === "published"
+          ) {
             res.write(
               `data: ${JSON.stringify({
                 eventType,
@@ -228,8 +227,9 @@ export const streamTimelinePosts = async (
             );
           }
         }
+
       }
-      
+
     });
 
     watchPost.on("error", (error) => {
@@ -259,7 +259,7 @@ export const getSavePosts = async (
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { skip = 0, limit = 0 } = req.query;
-    const { saves } = req.session.user!;    
+    const { saves } = req.session.user!;
 
     if (!saves.length)
       createError({ message: "No saves yet", statusCode: 404 });
@@ -473,7 +473,7 @@ export const partialEditPost = async (
   try {
     // Validate user input
     const errors = validationResult(req);
-    if (!errors.isEmpty())return createError({ message: errors.array()[0].msg, statusCode: 422 });
+    if (!errors.isEmpty()) return createError({ message: errors.array()[0].msg, statusCode: 422 });
 
     const { id } = req.params;
 

@@ -17,7 +17,10 @@ export const security = (app: Application) => {
   ) {
     app.use(
       cors({
-        origin: [process.env.DOMAIN_NAME_FRONTEND], // Allow requests from this origin
+        origin: [
+          process.env.DOMAIN_NAME_FRONTEND,
+          //"https://localhost:4173"
+        ], // Allow requests from this origin
        // methods: [], // Allow specific HTTP methods 
         credentials: true, // Allow
       })
