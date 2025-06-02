@@ -65,7 +65,6 @@ export const getSingleUser = async (
     next(error);
   }
 };
-
 // Get authenticated user controller
 export const getAuthUser = async (
   req: Request,
@@ -114,26 +113,34 @@ export const editAuthUser = async (
     if (!errors.isEmpty())
       createError({ message: errors.array()[0].msg, statusCode: 422 });
 
-    const {
-      name,
-      avatar,
-      dateOfBirth,
-      displayDateOfBirth,
-      displayEmail,
-      displayPhoneNumber,
-      website,
-      profession,
-      country,
-      sex,
-      bio,
-    }: userProps = req.body;
-    const user = req.session.user!; // Get the authenticated user from the session
-    const image_from_multer = req.file?.filename;
+    // Parse request body
+    for (const key in req.body) {
+      let value: string = req.body[key];
+      try {
+        value = JSON.parse(value);
+      } catch {
+        createError({ message: "Invalid JSON data. Please provide only json data", statusCode: 422 });
+      }
+      req.body[key] = value;
+    }
 
+    // Extract editable user properties from request body
+    const { name, avatar, dateOfBirth, displayDateOfBirth, displayEmail, displayPhoneNumber, website, profession, country, sex, bio,}: userProps = req.body;
+
+    // Get the authenticated user
+    const user = req.session.user!; 
+    
+    // Check if there is a file uploaded by multer
+    let image_from_multer: string | undefined;
+    if (req.file && req.file.filename) {
+       image_from_multer = req.file?.filename;      
+    }
+
+    // Update user in the database
     const updatedUser = await Users.findByIdAndUpdate(
       user._id,
       {
-        avatar: image_from_multer || avatar,
+        avatar: (image_from_multer || avatar),
         name,
         dateOfBirth,
         displayDateOfBirth,
@@ -337,3 +344,4 @@ export const deleteAuthUser = async (
     next(error);
   }
 };
+
