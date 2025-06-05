@@ -15,15 +15,16 @@ const uploadMedia = multer({
     fileSize: 100 * 1024 * 1024, // 100MB max file size
   },
   fileFilter(_req, file, callback) {
-    const fileExt = path.extname(file.originalname).toLowerCase();
-    const accepted_ext = acceptedFiles[fileExt as keyof typeof acceptedFiles];
-    const accepted_mimeType = accepted_ext === file.mimetype;
+    const fileExt = path.extname(file.originalname).toLowerCase();    
+    const accepted_ext = acceptedFiles[fileExt as keyof typeof acceptedFiles];    
+    const accepted_mimeType = accepted_ext === file.mimetype;    
 
     if (!accepted_mimeType) {
-      return callback(
+      callback(
         createError({ statusCode: 415, message: "Unsupported file type" }),
         false
       );
+      
     }
     file.filename = Date.now() + "-" + file.originalname.replace(/ /g, "-");
     callback(null, true);

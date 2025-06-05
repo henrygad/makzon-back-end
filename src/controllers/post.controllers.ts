@@ -201,8 +201,8 @@ export const streamTimelinePosts = async (
 
     watchPost.on("change", async (change) => {
       // Listen for changes and send updated posts to client
-      const eventType = change.operationType;
-      const post: postProps = change.fullDocument;
+      const eventType = change.operationType as string;
+      const post = change.fullDocument as postProps;
 
       if (post) {
         if (eventType === "delete") {

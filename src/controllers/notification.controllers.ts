@@ -49,12 +49,12 @@ export const streamAuthUserNotification = async (
     res.flushHeaders();
 
     const pipeline = [
-      { $match: { operationType: { $in: ["insert", "update", "delete"] } } },
+      { $match: { operationType: { $in: ["insert"] } } },
     ];
     const watchNotifications = Notifications.watch(pipeline);
 
     watchNotifications.on("change", (change) => {
-      const eventType = change.operationType;
+      const eventType = change.operationType as string;
       const notification = change.fullDocument as notificationProps;
       if (eventType === "delete") {
         // send notification id to client when notification is deleted

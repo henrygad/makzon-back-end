@@ -133,7 +133,7 @@ export const editAuthUser = async (
     // Check if there is a file uploaded by multer
     let image_from_multer: string | undefined;
     if (req.file && req.file.filename) {
-       image_from_multer = req.file?.filename;      
+       image_from_multer = req.file.filename;      
     }
 
     // Update user in the database
@@ -212,7 +212,7 @@ export const streamUserFollowers = async (
   next: NextFunction
 ) => {
   try {
-    const { userName } = req.params;
+    //const { userName } = req.params;   
 
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -221,8 +221,7 @@ export const streamUserFollowers = async (
     });
     res.flushHeaders(); // Flush the headers to establish SSE with client
 
-    const pipeline = [
-      { $match: { "fullDocument.userName": userName } },
+    const pipeline = [      
       { $match: { operationType: { $in: ["insert", "update", "delete"] } } },
       {
         $match: {
@@ -234,13 +233,12 @@ export const streamUserFollowers = async (
 
     watchUser.on("change", (change) => {
       // Stream user followers
-      const eventType = change.operationType;
-      const followers = change.updateDescription.updatedFields.followers;
-
+      const eventType = change.operationType as string;
+      const followers = change.updateDescription.updatedFields.followers as string[];      
       res.write(`data: ${JSON.stringify({ eventType, followers })}\n\n`);
     });
 
-    watchUser.on("error", (error) => {
+    watchUser.on("error", (error) => {      
       res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
     });
 
@@ -248,6 +246,7 @@ export const streamUserFollowers = async (
       watchUser.close();
       res.end();
     });
+
   } catch (error) {
     next(error);
   }
@@ -266,25 +265,30 @@ export const editAuthUserFollowings = async (
     const { friendUserName }: { friendUserName: string } = req.body;
     const user = req.session.user!;
 
-    const isFollowing = user.followings.includes(friendUserName); // Check is following username
+    // Check is following username
+    const isFollowing = user.followings.includes(friendUserName);
 
-    if (isFollowing) { // If alread following this username
+    if (isFollowing) {   
       // Unfollow user     
       const unFollowedUser = await Users.findOneAndUpdate(
         { userName: friendUserName },
         { $pull: { followers: user.userName } },
         { runValidators: true }
-      );
-      if (!unFollowedUser) return createError({ statusCode: 404, message: "User not found or User not unfollowed", });
+      );            
+      if (!unFollowedUser) return createError({ statusCode: 404, message: "User not found or User not unfollowed", });      
 
       // Remove friend username from user following
       const authUser = await Users.findById(user._id);
-      if (!authUser) return createError({ statusCode: 404, message: "Auth user not found", });
-      authUser.followings.filter((name) => name !== unFollowedUser.userName);
+      if (!authUser) return createError({ statusCode: 404, message: "Friend not found in following friends", });      
+      
+      authUser.followings = authUser.followings.filter(
+        (following) => following !== friendUserName
+      );  
       authUser.markModified("followings");
       req.session.user = await authUser.save();
-    } else { // Follow user      
 
+    } else {
+      // Follow user
       const followedUser = await Users.findOneAndUpdate(
         { userName: friendUserName },
         { $push: { followers: user.userName } },
@@ -294,10 +298,11 @@ export const editAuthUserFollowings = async (
 
       // Add friend username from user following
       const authUser = await Users.findById(user._id);
-      if (!authUser) return createError({ statusCode: 404, message: "Auth user not found", });
+      if (!authUser) return createError({ statusCode: 404, message: "Friend not found in following friends", });
+
       authUser.followings.push(friendUserName);
       authUser.markModified("followings");
-      req.session.user = await authUser.save();
+      req.session.user = await authUser.save();      
     }
 
     res.status(200).json({
