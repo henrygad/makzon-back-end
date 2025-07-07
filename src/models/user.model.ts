@@ -90,7 +90,7 @@ UserSchema.methods.saveChange = async function () {
 
 // Method that compare password when called
 UserSchema.methods.isValidPassword = async function (password: string) {
-  const isMatch = await bcrypt.compare(password, this.password);
+  const isMatch = await bcrypt.compare(password, this.password || "");
   return isMatch;
 };
 

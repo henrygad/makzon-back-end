@@ -2,8 +2,7 @@ import express from "express";
 import session from "./config/session.config";
 import {
   authRoutes,
-  mediaRoutes,
-  testRoutes,
+  mediaRoutes,  
   userRoutes,
   postRoutes,
   commentRoutes,
@@ -11,6 +10,7 @@ import {
   draftRoutes,
   baseRoute,
   notificationRoutes,
+  aiRoute,
 } from "./routes/index";
 import { security, enforceHTTPS } from "./middlewares/security.middleware";
 import errorHandler from "./middlewares/error.middleware";
@@ -47,7 +47,7 @@ app.use("/api/draft", draftRoutes); // Draft routes
 app.use("/api/comment", commentRoutes); // Comment routes
 app.use("/api/media", mediaRoutes); // File routes
 app.use("/api/search", searchRoutes); // Search routes
-app.use("/api/test", testRoutes); // Testing routes
+app.use("/api/generateaicontent", aiRoute); // Testing routes
 app.all("/api/*", notFound); // Not found route
 
 app.use(errorHandler); // Error middleware

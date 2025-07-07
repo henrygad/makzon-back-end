@@ -7,8 +7,7 @@ import notificationRoutes from "./notification.route";
 import searchRoutes from "./search.route";
 import draftRoutes from "./draft.route";
 import baseRoute from "./base.route";
-
-import testRoutes from "./test.route";
+import aiRoute from "./ai.route";
 
 export {
     baseRoute,
@@ -20,6 +19,5 @@ export {
     notificationRoutes,
     searchRoutes,
     draftRoutes,
-    
-    testRoutes,
+    aiRoute
 };

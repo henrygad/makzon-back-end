@@ -126,7 +126,7 @@ export const resetPassword = async (
         message:
           "User not found or time out to reset password. Please send new request",
       });
-
+    
     if (user) {
       const sameAsOld = await user.isValidPassword(newPassword);
       if (sameAsOld)

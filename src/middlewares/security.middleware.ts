@@ -13,21 +13,20 @@ export const security = (app: Application) => {
 
   // Enable CORS for the frontend
   if (process.env.SAME_ORIGIN === "false" &&
-      process.env.DOMAIN_NAME_FRONTEND
+    process.env.DOMAIN_NAME_FRONTEND
   ) {
+
     app.use(
       cors({
         origin: [
           process.env.DOMAIN_NAME_FRONTEND,
-          //"https://localhost:4173"
         ], // Allow requests from this origin
-       // methods: [], // Allow specific HTTP methods 
-        credentials: true, // Allow
+        credentials: true, // Allow with credentials
       })
     );
   }
 
- // Set Content-Security-Policy header
+  // Set Content-Security-Policy header
   app.use((_req: Request, res: Response, next: NextFunction) => {
     res.setHeader(
       "Content-Security-Policy",
@@ -35,21 +34,21 @@ export const security = (app: Application) => {
     );
     next();
   });
-  
+
   // Prevent XSS attacks
   app.use(xssClean());
   app.use(sanitize); // ( Deep sanitize )
 
- // Prevent HTTP Parameter Pollution
+  // Prevent HTTP Parameter Pollution
   app.use(hpp());
 
- // Rate limiting
+  // Rate limiting
   app.use(rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // Limit each IP to 100 requests per windowMs
     message: "Too many requests from this IP, please try again later.",
   }));
-  
+
 };
 // Enforce HTTPS
 export const enforceHTTPS = (
