@@ -12,19 +12,21 @@ export const security = (app: Application) => {
   app.use(helmet());
 
   // Enable CORS for the frontend
-  if (process.env.SAME_ORIGIN === "false" &&
-    process.env.DOMAIN_NAME_FRONTEND
-  ) {
+  const allowedOrigins = [
+    process.env.DOMAIN_NAME_FRONTEND,
+    "http://localhost:5173" // (for local dev)
+  ];
 
-    app.use(
-      cors({
-        origin: [
-          process.env.DOMAIN_NAME_FRONTEND,
-        ], // Allow requests from this origin
-        credentials: true, // Allow with credentials
-      })
-    );
-  }
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  }));
 
   // Set Content-Security-Policy header
   app.use((_req: Request, res: Response, next: NextFunction) => {

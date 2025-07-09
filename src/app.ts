@@ -38,6 +38,7 @@ security(app); // Apply security middleware
 
 app.use(session); // Enable session support
 
+
 app.use("/api", baseRoute); // Base api
 app.use("/api/auth", authRoutes); // Auth routes
 app.use("/api/user", userRoutes); // User routes

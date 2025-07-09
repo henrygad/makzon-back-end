@@ -18,7 +18,7 @@ router.post("/", async (
     try {
         
         if (!topic?.trim()) {
-            createError({ statusCode: 422, message: "Topic is required" });
+           return  createError({ statusCode: 422, message: "Topic is required" });
         }
 
         const response = await axios.post(
@@ -45,7 +45,11 @@ router.post("/", async (
         );
 
         const data = await response.data;
-        const content = data.choices?.[0]?.message?.content || "No content generated.";
+        if (!data) {
+            return createError({ statusCode: 404, message: "No content generated." });
+        }
+
+        const content = data.choices[0].message.content;
 
         res.json({ content });
     } catch (error) {
