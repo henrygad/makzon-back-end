@@ -13,8 +13,9 @@ export const security = (app: Application) => {
 
   // Enable CORS for the frontend
   const allowedOrigins = [
-    process.env.DOMAIN_NAME_FRONTEND,
-    "http://localhost:5173" // (for local dev)
+    process.env.DOMAIN_NAME_FRONTEND, // (for makzon front end production domain)
+    "http://localhost:5173", // (for local dev)
+    "https://makzontexteditor.netlify.app/", // (makzonrichtexteditor front end production domain)
   ];
 
   app.use(cors({
