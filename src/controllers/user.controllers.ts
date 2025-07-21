@@ -330,8 +330,9 @@ export const deleteAuthUser = async (
     const { password } = req.query as { password: string };
     const user = req.session.user!;
 
-    if (user.password) { // Check if have a password
-      // Comfirm user password
+    // step 1) Comfirm if this user sign in localy
+    if (user.password) {
+      // step 2) Comfirm user password
       const isMatch = user.isValidPassword(password);
       if (!isMatch) return createError({ statusCode: 401, message: "Invalid password" });
     }

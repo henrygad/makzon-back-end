@@ -48,11 +48,11 @@ router.post("/", async (
         if (!data) {
             return createError({ statusCode: 404, message: "No content generated." });
         }
-
-        const content = data.choices[0].message.content;
+        
+        const content = data.choices[0].message.content;        
 
         res.json({ content });
-    } catch (error) {
+    } catch (error) {        
         next(error);
     }
 });
